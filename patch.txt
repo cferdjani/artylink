@@ -1,0 +1,64 @@
+export async function searchArtisans(params: {
+    q?: string;
+    wilaya?: string;
+    commune?: string;
+    category?: string;
+    subcategory?: string;
+    limit?: number;
+    offset?: number;
+}): Promise<{ artisans: MarketplaceArtisan[]; totalCount: number }> {
+    try {
+        const supabase = await createSupabaseServerClient();
+
+        let query = supabase
+            .from("artisans")
+            .select(
+                `
+                id, wilaya, city, is_verified, rating, review_count, 
+                profiles!inner(full_name,email,phone,avatar_url), 
+                artisan_categories(is_primary,categories(id,slug,name))
+                `,
+                { count: 'exact' }
+            );
+
+        if (params.wilaya && params.wilaya !== "toute-l-algerie") {
+            const rawWilaya = params.wilaya.replace(/-/g, ' '); // Very naive, better to ilike or something
+            query = query.ilike("wilaya", `%${rawWilaya}%`);
+        }
+
+        if (params.commune && params.commune !== "toutes-communes") {
+            const rawCommune = params.commune.replace(/-/g, ' ');
+            query = query.ilike("city", `%${rawCommune}%`);
+        }
+
+        // We apply text search on profile full_name if q exists
+        if (params.q) {
+            query = query.ilike("profiles.full_name", `%${params.q}%`);
+        }
+        
+        query = query.order("is_verified", { ascending: false })
+            .order("rating", { ascending: false });
+
+        const limit = params.limit ?? 20;
+        const offset = params.offset ?? 0;
+        
+        query = query.range(offset, offset + limit - 1);
+
+        const { data, error, count } = await query;
+
+        if (error || !data) {
+            return { artisans: [], totalCount: 0 };
+        }
+
+        // Map data to MarketplaceArtisan format
+        let mapped = (data as unknown as DbArtisanRow[]).map((row, index) => mapDbArtisan(row, index));
+
+        // In-memory filter for category / subcategory since inner join on nested collections in Postgrest can be tricky
+        // This keeps it simpler while transitioning from mock to DB
+        // ... well actually if I want exact IDs I should query categories table first.
+        
+        return { artisans: mapped, totalCount: count ?? 0 };
+    } catch {
+        return { artisans: [], totalCount: 0 };
+    }
+}

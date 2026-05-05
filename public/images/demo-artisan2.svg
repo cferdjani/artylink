@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+  <rect width="100%" height="100%" fill="#fff7ed"/>
+  <circle cx="120" cy="84" r="44" fill="#fed7aa" />
+  <rect x="56" y="140" width="128" height="56" rx="8" fill="#fff1e6" />
+  <text x="120" y="152" font-size="14" text-anchor="middle" fill="#7c2d12" font-family="Arial">Leila B.</text>
+</svg>

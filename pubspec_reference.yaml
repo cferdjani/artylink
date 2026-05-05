@@ -1,0 +1,184 @@
+# pubspec.yaml — Référence Complète
+# Plateforme Artisans — Flutter 3.35.4
+
+name: artisans_app
+description: Plateforme de mise en relation clients et artisans tous domaines.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.9.2 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ══════════════════════════════════════════════════
+  # BACKEND — Supabase
+  # ══════════════════════════════════════════════════
+  supabase_flutter: ^2.8.4          # Client Supabase (Auth + DB + Storage + Realtime)
+
+  # ══════════════════════════════════════════════════
+  # NAVIGATION
+  # ══════════════════════════════════════════════════
+  go_router: ^14.6.3                # Router web-friendly avec deep linking
+
+  # ══════════════════════════════════════════════════
+  # STATE MANAGEMENT
+  # ══════════════════════════════════════════════════
+  provider: 6.1.5+1                 # State management (ChangeNotifier)
+
+  # ══════════════════════════════════════════════════
+  # UI COMPONENTS
+  # ══════════════════════════════════════════════════
+  cached_network_image: ^3.4.1      # Images réseau avec cache
+  flutter_rating_bar: ^4.0.1        # Barre de notation (étoiles)
+  shimmer: ^3.0.0                   # Effet skeleton loading
+  lottie: ^3.3.1                    # Animations Lottie (JSON)
+  flutter_svg: ^2.0.10              # Icônes SVG
+  photo_view: ^0.15.0               # Galerie photos plein écran
+
+  # ══════════════════════════════════════════════════
+  # CARTES & GÉOLOCALISATION
+  # ══════════════════════════════════════════════════
+  google_maps_flutter: ^2.10.0      # Cartes Google Maps
+  geolocator: ^13.0.2               # GPS du téléphone
+
+  # ══════════════════════════════════════════════════
+  # PAIEMENT
+  # ══════════════════════════════════════════════════
+  flutter_stripe: ^11.2.0           # Stripe payment (carte bancaire)
+
+  # ══════════════════════════════════════════════════
+  # STOCKAGE LOCAL
+  # ══════════════════════════════════════════════════
+  shared_preferences: 2.5.3         # Clé-valeur (préférences, token)
+  hive: 2.2.3                       # Base de données locale (objets complexes)
+  hive_flutter: 1.1.0               # Intégration Hive + Flutter
+
+  # ══════════════════════════════════════════════════
+  # RÉSEAU & HTTP
+  # ══════════════════════════════════════════════════
+  http: 1.5.0                       # Client HTTP pour API externes
+
+  # ══════════════════════════════════════════════════
+  # UTILITAIRES
+  # ══════════════════════════════════════════════════
+  intl: ^0.19.0                     # Formatage dates, nombres, devises
+  url_launcher: ^6.3.1              # Ouvrir URL, téléphone, email
+  share_plus: ^10.1.4               # Partage natif
+  path_provider: ^2.1.5             # Accès au système de fichiers
+  permission_handler: ^11.3.1       # Gestion permissions runtime
+
+  # ══════════════════════════════════════════════════
+  # IMAGES & FICHIERS
+  # ══════════════════════════════════════════════════
+  image_picker: ^1.1.2              # Sélectionner photo (galerie + caméra)
+  image_cropper: ^8.1.1             # Recadrer les images
+  file_picker: ^8.3.7               # Sélectionner fichiers (PDF, docs)
+
+  # ══════════════════════════════════════════════════
+  # NOTIFICATIONS
+  # ══════════════════════════════════════════════════
+  firebase_core: 3.6.0              # Firebase Core (requis pour FCM)
+  firebase_messaging: 15.1.3        # Push notifications FCM
+
+  # ══════════════════════════════════════════════════
+  # ICÔNES
+  # ══════════════════════════════════════════════════
+  cupertino_icons: ^1.0.8           # Icônes iOS style
+  material_symbols_icons: ^4.2830.0 # Google Material Symbols (étendu)
+
+  # ══════════════════════════════════════════════════
+  # FORMULAIRES & VALIDATION
+  # ══════════════════════════════════════════════════
+  reactive_forms: ^17.0.1           # Formulaires réactifs avancés
+
+  # ══════════════════════════════════════════════════
+  # DATES & CALENDRIER
+  # ══════════════════════════════════════════════════
+  table_calendar: ^3.2.0            # Widget calendrier interactif
+  syncfusion_flutter_datepicker: ^27.2.2  # Date picker avancé
+
+  # ══════════════════════════════════════════════════
+  # GRAPHIQUES (Admin Dashboard)
+  # ══════════════════════════════════════════════════
+  fl_chart: ^0.69.2                 # Graphiques (bar, line, pie)
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0             # Règles linting
+  build_runner: ^2.4.13             # Génération de code (Hive adapters)
+  hive_generator: ^2.0.1            # Génération adapters Hive
+  json_serializable: ^6.9.4         # Sérialisation JSON auto
+
+flutter:
+  uses-material-design: true
+
+  # ══════════════════════════════════════════════════
+  # ASSETS
+  # ══════════════════════════════════════════════════
+  assets:
+    # Images
+    - assets/images/
+    # Icônes
+    - assets/icons/
+    # Animations Lottie
+    - assets/animations/
+    # Données statiques
+    - assets/data/
+
+  # ══════════════════════════════════════════════════
+  # FONTS
+  # ══════════════════════════════════════════════════
+  fonts:
+    # Poppins — Titres & headings
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
+
+    # Inter — Corps de texte
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+
+# ══════════════════════════════════════════════════════════════
+# NOTES D'INSTALLATION
+# ══════════════════════════════════════════════════════════════
+#
+# 1. Télécharger les fonts Poppins et Inter depuis Google Fonts
+#    https://fonts.google.com/specimen/Poppins
+#    https://fonts.google.com/specimen/Inter
+#
+# 2. Placer les fichiers .ttf dans assets/fonts/
+#
+# 3. Pour Google Maps, ajouter la clé API :
+#    Android: android/app/src/main/AndroidManifest.xml
+#    <meta-data android:name="com.google.android.geo.API_KEY"
+#               android:value="VOTRE_CLE_API"/>
+#
+# 4. Pour Firebase FCM :
+#    - Créer un projet Firebase
+#    - Télécharger google-services.json → android/app/
+#    - Activer Cloud Messaging dans Firebase Console
+#
+# 5. Pour Stripe :
+#    - Créer un compte Stripe
+#    - Configurer les clés dans les variables d'environnement
+#    - Configurer le webhook dans Stripe Dashboard
+#
+# 6. Générer les adapters Hive (si utilisation de modèles annotés) :
+#    flutter packages pub run build_runner build

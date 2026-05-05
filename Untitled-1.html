@@ -1,0 +1,85 @@
+import { GlassCard } from "@/components/ui/glass-card";
+import { CreditCard, Users, Settings, Activity } from "lucide-react";
+import Link from "next/link";
+import { getPendingPayments } from "@/lib/actions/payments-admin";
+import { adminGetArtisans } from "@/lib/actions/users-admin";
+
+export const metadata = {
+title: "Tableau de Bord Admin | ArtyLink"
+};
+
+export const dynamic = 'force-dynamic';
+
+export default async function AdminDashboardPage() {
+const [pendingPayments, artisans] = await Promise.all([
+getPendingPayments(),
+adminGetArtisans("pending")
+]);
+
+return (
+<div className="space-y-8 animate-fade-in-up">
+    <div>
+        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Vue d'ensemble Admin</h1>
+        <p className="text-slate-500 font-medium mt-1">Supervisez l'activité et validez les opérations critiques de la
+            plateforme.</p>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <GlassCard className="p-6 border-white/60">
+            <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
+                    <CreditCard size={24} />
+                </div>
+                <div>
+                    <p className="text-sm font-bold text-slate-500">Recharges</p>
+                    <h2 className="text-2xl font-black text-slate-900">{pendingPayments.length}</h2>
+                </div>
+            </div>
+            <Link href="/admin/payments"
+                className="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+            Traiter les demandes &rarr;
+            </Link>
+        </GlassCard>
+
+        <GlassCard className="p-6 border-white/60">
+            <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+                    <Users size={24} />
+                </div>
+                <div>
+                    <p className="text-sm font-bold text-slate-500">Artisans en attente</p>
+                    <h2 className="text-2xl font-black text-slate-900">{artisans.length}</h2>
+                </div>
+            </div>
+            <Link href="/admin/users"
+                className="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+            Auditer les profils &rarr;
+            </Link>
+        </GlassCard>
+
+        <GlassCard className="p-6 border-white/60 opacity-50 cursor-not-allowed">
+            <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+                    <Activity size={24} />
+                </div>
+                <div>
+                    <p className="text-sm font-bold text-slate-500">Analytics</p>
+                    <h2 className="text-2xl font-black text-slate-900">Bêta</h2>
+                </div>
+            </div>
+            <span className="text-xs font-bold text-slate-400">Arrive bientôt</span>
+        </GlassCard>
+    </div>
+
+    <GlassCard className="p-8 border-white/60 bg-gradient-to-br from-primary/5 to-transparent">
+        <h3 className="text-xl font-black text-slate-900 mb-2">Bienvenue sur le centre de contrôle</h3>
+        <p className="text-slate-600 leading-relaxed font-medium max-w-2xl">
+            Utilisez le menu latéral pour naviguer entre la modération financière (validation des paiements locaux CCP
+            et BaridiMob) et la modération des utilisateurs (assignation du badge Pro Vérifié).
+            Toutes les actions entreprises ici bypassent les sécurités RLS de niveau compte, et impactent directement la
+            production.
+        </p>
+    </GlassCard>
+</div>
+);
+}

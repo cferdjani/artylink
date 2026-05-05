@@ -1,0 +1,134 @@
+"use server";
+
+import { isArtisanAccount } from "@/lib/auth-role";
+import { featuredCategories } from "@/lib/marketplace-data";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+
+const ARTISAN_CATEGORY_MAP = new Map(
+    featuredCategories.map((category) => [
+        category.name,
+        category.subcategories.map((subcategory) => subcategory.name),
+    ]),
+);
+
+export async function updateProfileDetails(formData: FormData) {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error("Vous devez être connecté pour modifier votre profil.");
+    }
+
+    const firstName = formData.get("first_name")?.toString().trim() || "";
+    const lastName = formData.get("last_name")?.toString().trim() || "";
+    const fullName = `${firstName} ${lastName}`.trim();
+    const phone = formData.get("phone")?.toString().trim() || null;
+    const ageValue = formData.get("age")?.toString().trim() || "";
+    const age = ageValue ? Number(ageValue) : null;
+    const wilaya = formData.get("wilaya")?.toString().trim() || null;
+    const commune = formData.get("commune")?.toString().trim() || null;
+    const profession = formData.get("profession")?.toString().trim() || null;
+    const specialtyValue = formData.get("specialties")?.toString().trim() || "";
+    const bio = formData.get("bio")?.toString().trim() || null;
+    const availabilityValue = formData.get("availability_status")?.toString().trim();
+    const availability_status = availabilityValue === "unavailable" ? "unavailable" : "available";
+    const specialties = specialtyValue ? [specialtyValue] : [];
+
+    if (!firstName || !lastName) {
+        throw new Error("Nom et prenom sont obligatoires.");
+    }
+
+    if (age !== null && (!Number.isInteger(age) || age < 18 || age > 100)) {
+        throw new Error("L'age doit etre compris entre 18 et 100.");
+    }
+
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+    const isArtisan = isArtisanAccount({
+        user,
+        profileRole: profile?.role,
+    });
+
+    const resolvedRole = isArtisan ? "artisan" : profile?.role || "client";
+
+    const { error } = await supabase
+        .from("profiles")
+        .upsert({
+            id: user.id,
+            email: user.email || null,
+            full_name: fullName,
+            first_name: firstName,
+            last_name: lastName,
+            age,
+            phone,
+            wilaya,
+            commune,
+            city: commune,
+            role: resolvedRole,
+            updated_at: new Date().toISOString(),
+        }, { onConflict: "id" });
+
+    if (error) {
+        throw new Error("Erreur lors de la mise à jour du profil : " + error.message);
+    }
+
+    if (isArtisan) {
+        // Récupération des données existantes pour ne pas écraser la bio/entreprise si le form ne les envoie pas toutes
+        const { data: existing } = await supabase
+            .from("artisans")
+            .select("profession, specialties, bio, company_name, business_name, availability_status")
+            .eq("id", user.id)
+            .maybeSingle();
+
+        const finalProfession = profession || existing?.profession;
+        const finalSpecialties = specialtyValue ? [specialtyValue] : existing?.specialties || [];
+        const finalBio = bio || existing?.bio;
+
+        if (!finalProfession) {
+            throw new Error("La categorie metier est manquante.");
+        }
+
+        const allowedSpecialties = ARTISAN_CATEGORY_MAP.get(finalProfession);
+        if (!allowedSpecialties) {
+            throw new Error("Categorie metier invalide.");
+        }
+
+        if (specialtyValue && !allowedSpecialties.includes(specialtyValue)) {
+            throw new Error("La specialite ne correspond pas a la categorie choisie.");
+        } else if (!finalSpecialties.length) {
+            throw new Error("La specialite est manquante.");
+        }
+
+        const { error: artisanError } = await supabase
+            .from("artisans")
+            .upsert(
+                {
+                    id: user.id,
+                    profile_id: user.id,
+                    profession: finalProfession,
+                    specialties: finalSpecialties,
+                    wilaya: wilaya || undefined,
+                    city: commune || undefined,
+                    bio: finalBio,
+                    company_name: existing?.company_name || finalProfession,
+                    business_name: existing?.business_name || finalProfession,
+                    availability_status: availability_status,
+                    updated_at: new Date().toISOString(),
+                },
+                { onConflict: "id" },
+            );
+
+        if (artisanError) {
+            throw new Error("Erreur lors de la mise a jour artisan : " + artisanError.message);
+        }
+    }
+
+    revalidatePath("/dashboard/account");
+    revalidatePath(`/artisan/${user.id}`); // Forcer Next.js à vider le cache de la vitrine publique
+    revalidatePath("/", "layout"); // Forcer le rafraîchissement global (Navbar)
+}
