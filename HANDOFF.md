@@ -1007,7 +1007,7 @@
 - Le propriétaire `oucher007@gmail.com` accède à `/admin`.
 - Le flux `delegate invitation -> page admin-activation -> saisie du code` arrive bien jusqu'à l'écran d'activation en production.
 - Un bug de rendu production restait visible juste après activation du délégué : bannière `An error occurred in the Server Components render`.
-- Le correctif de ce bug est appliqué dans le workspace local `artisans_web`, mais il doit encore être poussé dans le repo GitHub propre `https://github.com/cferdjani/artylink.git` puis redéployé sur Vercel pour prendre effet en ligne.
+- Le correctif de ce bug a été poussé vers le repo GitHub propre `https://github.com/cferdjani/artylink.git` avec le commit `4273b7c Fix delegate activation redirect`; il faut maintenant vérifier que Vercel `artylink-web` a bien redéployé ce commit.
 
 ### Correctif appliqué dans cette session
 - Le client d'activation ne fait plus `router.push(...)` puis `router.refresh()` en même temps.
@@ -1040,8 +1040,8 @@
 - Si l'erreur persiste en prod, il faudra lire le digest exact de l'erreur depuis les logs Vercel et vérifier la route de destination réellement calculée pour le délégué.
 
 ### Prochaines étapes concrètes
-1. Pousser les changements locaux vers le repo GitHub propre `cferdjani/artylink`.
-2. Laisser Vercel redéployer `artylink-web` ou lancer un redeploy manuel.
+1. Vérifier dans Vercel que le projet `artylink-web` a redéployé le commit `4273b7c`.
+2. Si aucun redeploy automatique n'apparaît, lancer un redeploy manuel depuis `Deployments`.
 3. Retester avec un nouveau délégué en production privée :
    - recevoir l'invitation
    - saisir le code
@@ -1051,4 +1051,4 @@
 6. Si besoin, ouvrir les logs Vercel du projet `artylink-web` au moment exact du clic.
 
 ### Prompt de reprise recommandé pour nouveau chat / nouvel agent
-Lire `AGENTS.md`, `HANDOFF.md`, `PROMPT_AGENT_SPRINT_FINAL_PART2.md` et `DEPLOYMENT.md` avant toute action. Préserver strictement la logique métier existante : `profiles.role` reste `client/artisan`, le système admin reste séparé en `owner/delegate`, et le flux `Mon Compte -> Modifier` ne doit pas être réécrit. Vérifier d'abord que les changements locaux concernant l'activation des délégués sont bien poussés vers `https://github.com/cferdjani/artylink.git`, puis que Vercel `artylink-web` redéploie. Ensuite retester le flux invitation délégué en production privée et documenter le résultat exact dans `HANDOFF.md` et `PROMPT_AGENT_SPRINT_FINAL_PART2.md`.
+Lire `AGENTS.md`, `HANDOFF.md`, `PROMPT_AGENT_SPRINT_FINAL_PART2.md` et `DEPLOYMENT.md` avant toute action. Préserver strictement la logique métier existante : `profiles.role` reste `client/artisan`, le système admin reste séparé en `owner/delegate`, et le flux `Mon Compte -> Modifier` ne doit pas être réécrit. Vérifier d'abord que Vercel `artylink-web` a redéployé le commit `4273b7c Fix delegate activation redirect`. Ensuite retester le flux invitation délégué en production privée et documenter le résultat exact dans `HANDOFF.md` et `PROMPT_AGENT_SPRINT_FINAL_PART2.md`.

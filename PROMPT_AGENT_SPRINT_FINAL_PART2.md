@@ -605,7 +605,7 @@ Tu interviens sur le projet ArtyLink en phase de maintenance post Go-Live. L'arc
 - Le owner `oucher007@gmail.com` accède à `/admin`.
 - Le flux `notification -> /dashboard/account/admin-activation -> saisie du code secret` est en place en production.
 - Un bug prod a été corrigé localement : après activation d'un délégué, une bannière `An error occurred in the Server Components render` pouvait apparaître.
-- Attention : ce correctif local doit être poussé vers le repo GitHub propre `https://github.com/cferdjani/artylink.git`, puis redéployé sur Vercel. Tant que ce push/redeploy n'est pas fait, la version en ligne peut encore afficher l'erreur.
+- Le correctif a été poussé vers le repo GitHub propre `https://github.com/cferdjani/artylink.git` avec le commit `4273b7c Fix delegate activation redirect`. La vérification restante est côté Vercel : confirmer que `artylink-web` a bien redéployé ce commit.
 
 ### Correctif appliqué
 - `src/app/admin/delegates/AdminActivationClient.tsx`
@@ -623,12 +623,12 @@ Tu interviens sur le projet ArtyLink en phase de maintenance post Go-Live. L'arc
 - Ne pas laisser des appels Supabase critiques sans vérification de `error` dans `respondToDelegateInvitation(...)`.
 
 ### Prochaine vérification obligatoire
-1. Pousser les changements locaux vers `https://github.com/cferdjani/artylink.git`.
-2. Vérifier que Vercel `artylink-web` a bien redéployé le dernier commit.
+1. Vérifier que Vercel `artylink-web` a bien redéployé le commit `4273b7c`.
+2. Si besoin, lancer un redeploy manuel depuis l'onglet `Deployments`.
 3. Retester en prod privée avec un nouveau délégué.
 4. Confirmer que l'activation n'affiche plus la bannière d'erreur RSC.
 5. Confirmer la redirection finale vers la bonne route selon les permissions du délégué.
 6. Si l'erreur persiste, lire les logs Vercel et récupérer le digest exact.
 
 ### Prompt opérationnel à donner au prochain agent
-Avant toute action, lis `AGENTS.md`, `HANDOFF.md`, `PROMPT_AGENT_SPRINT_FINAL_PART2.md` et `DEPLOYMENT.md`. Ne réécris pas les flux existants. Préserve la séparation `profiles.role = client/artisan` et `admin_accounts = owner/delegate`. Préserve le flux `Mon Compte -> Modifier` et le système d'audit admin. La priorité est de vérifier que le correctif local du flux d'activation délégué (`AdminActivationClient.tsx` et `admin-delegates.ts`) est poussé dans le repo GitHub propre `cferdjani/artylink`, puis déployé sur Vercel `artylink-web`. Ensuite, teste en production privée : création d'un nouveau délégué, notification, saisie du code, activation, redirection selon permissions, absence de bannière `Server Components render`. Termine la session en mettant à jour `HANDOFF.md` et ce prompt avec l'état réel, les fichiers touchés, les validations, les risques et les prochaines étapes.
+Avant toute action, lis `AGENTS.md`, `HANDOFF.md`, `PROMPT_AGENT_SPRINT_FINAL_PART2.md` et `DEPLOYMENT.md`. Ne réécris pas les flux existants. Préserve la séparation `profiles.role = client/artisan` et `admin_accounts = owner/delegate`. Préserve le flux `Mon Compte -> Modifier` et le système d'audit admin. La priorité est de vérifier que Vercel `artylink-web` a bien redéployé le commit `4273b7c Fix delegate activation redirect`. Ensuite, teste en production privée : création d'un nouveau délégué, notification, saisie du code, activation, redirection selon permissions, absence de bannière `Server Components render`. Termine la session en mettant à jour `HANDOFF.md` et ce prompt avec l'état réel, les fichiers touchés, les validations, les risques et les prochaines étapes.
