@@ -23,6 +23,10 @@
   - filtre `Masquer les lus`
 - La page conversations supporte désormais :
   - filtre `Masquer les messages lus`
+- Le commit poussé sur GitHub en fin de session est :
+  - `40be873 Add notification selection filters`
+- Ce push doit déclencher le redéploiement Vercel du projet :
+  - `artylink-web`
 
 ### Fichiers ajoutés / modifiés le 2026-05-06
 - Ajoutés :
@@ -65,14 +69,13 @@
 - Le repo GitHub déployé contient toujours des dossiers non essentiels (`.idea`, `.vscode`, `new-plan-artylink`, `next-plan-artylink`) ; ne pas les supprimer sans revue de périmètre.
 
 ### Prochaines étapes concrètes
-1. Commit + push ce patch depuis ce repo unifié.
-2. Laisser Vercel redéployer `artylink-web`.
-3. Retester en production privée :
+1. Vérifier dans Vercel que le déploiement du commit `40be873` passe en `Ready`.
+2. Retester en production privée :
    - sélection notifications
    - suppression sélection
    - filtre `Masquer les lus`
    - filtre `Masquer les messages lus`
-4. Si tout passe, seulement ensuite envisager le nettoyage du backup `artisans_web_backup_2026-05-06`.
+3. Si tout passe, seulement ensuite envisager le nettoyage du backup `artisans_web_backup_2026-05-06`.
 
 ## Clôture technique intermédiaire — 2026-05-05
 

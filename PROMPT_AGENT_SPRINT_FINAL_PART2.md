@@ -25,6 +25,10 @@
   - filtre `Masquer les messages lus`
 - Le provider notifications expose maintenant aussi :
   - `removeNotifications(ids: string[])`
+- Le commit poussé sur GitHub en fin de session est :
+  - `40be873 Add notification selection filters`
+- Vercel doit déployer ce commit sur :
+  - `artylink-web`
 
 ### Fichiers critiques modifiés le 2026-05-06
 - `src/app/dashboard/account/admin-activation/page.tsx`
@@ -51,13 +55,12 @@
   n'ont pas été relancés ici
 
 ### Priorité de reprise
-1. Push du patch courant vers `cferdjani/artylink`.
-2. Laisser/redéclencher le redéploiement Vercel `artylink-web`.
-3. Tester en production privée :
+1. Vérifier le déploiement Vercel du commit `40be873`.
+2. Tester en production privée :
    - notifications sélection/suppression
    - filtre `Masquer les lus`
    - filtre `Masquer les messages lus`
-4. Mettre à jour `HANDOFF.md` et ce prompt avec les résultats réels du test live.
+3. Mettre à jour `HANDOFF.md` et ce prompt avec les résultats réels du test live.
 
 ## ÉTAT DE CLÔTURE INTERMÉDIAIRE — 2026-05-05
 
