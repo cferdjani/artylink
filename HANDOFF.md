@@ -14,6 +14,15 @@
   - réception invitation
   - saisie du code
   - activation OK
+- Correction supplémentaire en cours de session :
+  - le delegate actif ne perdait pas ses droits
+  - mais après reconnexion il retombait sur `/dashboard`
+  - cause : la redirection post-login ne connaissait que l'owner
+  - correctif appliqué dans :
+    - `src/lib/auth/redirect.ts`
+    - `src/app/auth/login/page.tsx`
+    - `src/app/auth/callback/route.ts`
+  - la redirection post-login résout maintenant aussi la landing admin permissionnelle des delegates actifs
 - Le correctif de redirection delegate active est présent dans :
   - `src/app/dashboard/account/admin-activation/page.tsx`
   - cette page ne doit plus forcer `/admin` si le delegate n'a pas `can_view_dashboard`
@@ -34,10 +43,13 @@
   - `src/app/dashboard/notifications/components/NotificationsPageClient.tsx`
   - `src/app/messages/MessagesPageClient.tsx`
 - Modifiés :
+  - `src/app/auth/callback/route.ts`
+  - `src/app/auth/login/page.tsx`
   - `src/app/dashboard/account/admin-activation/page.tsx`
   - `src/app/dashboard/notifications/page.tsx`
   - `src/app/messages/page.tsx`
   - `src/components/notifications/NotificationProvider.tsx`
+  - `src/lib/auth/redirect.ts`
   - `src/lib/actions/notifications.ts`
 
 ### SQL exécuté
@@ -70,8 +82,10 @@
 - Le repo GitHub déployé contient toujours des dossiers non essentiels (`.idea`, `.vscode`, `new-plan-artylink`, `next-plan-artylink`) ; ne pas les supprimer sans revue de périmètre.
 
 ### Prochaines étapes concrètes
-1. Vérifier dans Vercel que le déploiement du commit `40be873` passe en `Ready`.
+1. Push du correctif post-login delegate puis vérifier dans Vercel le déploiement `Ready`.
 2. Retester en production privée :
+   - reconnexion delegate actif
+   - arrivée directe sur la bonne route admin selon permissions
    - sélection notifications
    - suppression sélection
    - filtre `Masquer les lus`

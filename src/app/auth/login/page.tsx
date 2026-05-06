@@ -1,10 +1,37 @@
 'use client';
 
 import { GlassCard } from "@/components/ui/glass-card";
-import { resolvePostLoginPath, sanitizeRedirectPath } from "@/lib/auth/redirect";
+import { resolvePostLoginPathWithAdminState, sanitizeRedirectPath } from "@/lib/auth/redirect";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
+
+async function resolveAuthenticatedRedirectPath(nextPath: string, email: string | null | undefined) {
+    const supabase = createSupabaseBrowserClient();
+
+    const { data: adminAccount } = await supabase
+        .from("admin_accounts")
+        .select("admin_type, is_active, activation_status")
+        .maybeSingle();
+
+    let adminPermissions = null;
+
+    if (adminAccount?.admin_type === "delegate" && adminAccount.is_active && adminAccount.activation_status === "active") {
+        const { data } = await supabase
+            .from("admin_permissions")
+            .select("can_view_dashboard, can_manage_users, can_manage_payments, can_manage_sponsoring, can_manage_support_logs")
+            .maybeSingle();
+
+        adminPermissions = data;
+    }
+
+    return resolvePostLoginPathWithAdminState({
+        email,
+        requestedPath: nextPath,
+        adminAccount,
+        adminPermissions,
+    });
+}
 
 function LoginPageContent() {
     const [email, setEmail] = useState("");
@@ -34,7 +61,8 @@ function LoginPageContent() {
                 }
 
                 if (user) {
-                    window.location.replace(resolvePostLoginPath(user.email, nextPath));
+                    const target = await resolveAuthenticatedRedirectPath(nextPath, user.email);
+                    window.location.replace(target);
                     return;
                 }
             } catch {
@@ -96,7 +124,8 @@ function LoginPageContent() {
                 setError(error.message);
             } else {
                 setSuccess(true);
-                window.location.href = resolvePostLoginPath(data.user?.email ?? email, nextPath);
+                const target = await resolveAuthenticatedRedirectPath(nextPath, data.user?.email ?? email);
+                window.location.href = target;
             }
         } catch {
             setError("Erreur inattendue. Veuillez réessayer.");

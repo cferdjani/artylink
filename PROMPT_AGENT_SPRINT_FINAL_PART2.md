@@ -14,6 +14,16 @@
 
 ### État réel atteint
 - Le flux délégué avec code a été retesté manuellement et fonctionne.
+- Correctif complémentaire nécessaire puis appliqué :
+  - le delegate actif ne perdait pas ses droits
+  - mais sa reconnexion le renvoyait encore vers `/dashboard`
+  - la redirection post-login connaît maintenant aussi :
+    - `owner`
+    - `delegate actif`
+  - fichiers :
+    - `src/lib/auth/redirect.ts`
+    - `src/app/auth/login/page.tsx`
+    - `src/app/auth/callback/route.ts`
 - `src/app/dashboard/account/admin-activation/page.tsx` contient le correctif qui redirige un delegate actif vers sa vraie landing page permissionnelle au lieu de forcer `/admin`.
 - La page notifications a été refactorée pour utiliser :
   - `src/app/dashboard/notifications/components/NotificationsPageClient.tsx`
@@ -32,12 +42,15 @@
   - `artylink-web`
 
 ### Fichiers critiques modifiés le 2026-05-06
+- `src/app/auth/callback/route.ts`
+- `src/app/auth/login/page.tsx`
 - `src/app/dashboard/account/admin-activation/page.tsx`
 - `src/app/dashboard/notifications/page.tsx`
 - `src/app/dashboard/notifications/components/NotificationsPageClient.tsx`
 - `src/app/messages/page.tsx`
 - `src/app/messages/MessagesPageClient.tsx`
 - `src/components/notifications/NotificationProvider.tsx`
+- `src/lib/auth/redirect.ts`
 - `src/lib/actions/notifications.ts`
 - `HANDOFF.md`
 - `PROMPT_AGENT_SPRINT_FINAL_PART2.md`
@@ -56,8 +69,9 @@
   n'ont pas été relancés ici
 
 ### Priorité de reprise
-1. Vérifier le déploiement Vercel du commit `40be873`.
+1. Vérifier le déploiement Vercel du correctif de redirection post-login delegate.
 2. Tester en production privée :
+   - reconnexion delegate actif -> landing admin permissionnelle
    - notifications sélection/suppression
    - filtre `Masquer les lus`
    - filtre `Masquer les messages lus`
