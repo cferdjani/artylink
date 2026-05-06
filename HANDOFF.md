@@ -38,6 +38,13 @@
   - suppression rapide d'une notification directement depuis le dropdown de la cloche
 - La page conversations supporte désormais :
   - filtre `Masquer les messages lus`
+- Ajustement UI en cours de session :
+  - le bandeau premium fixe du bas créait un effet brouillard gênant sur `/admin`, `/dashboard` et `/messages`
+  - il est désormais masqué sur ces routes via :
+    - `src/app/RouteAwareBottomBar.tsx`
+    - `src/app/layout.tsx`
+  - la topbar est aussi élargie et simplifiée visuellement sur ces routes via :
+    - `src/components/shared/navbar.tsx`
 - Le commit poussé sur GitHub en fin de session est :
   - `40be873 Add notification selection filters`
 - Ce push doit déclencher le redéploiement Vercel du projet :
@@ -45,11 +52,13 @@
 
 ### Fichiers ajoutés / modifiés le 2026-05-06
 - Ajoutés :
+  - `src/app/RouteAwareBottomBar.tsx`
   - `src/app/dashboard/notifications/components/NotificationsPageClient.tsx`
   - `src/app/messages/MessagesPageClient.tsx`
 - Modifiés :
   - `src/app/auth/callback/route.ts`
   - `src/app/auth/login/page.tsx`
+  - `src/app/layout.tsx`
   - `src/app/dashboard/account/admin-activation/page.tsx`
   - `src/app/dashboard/notifications/page.tsx`
   - `src/app/messages/page.tsx`
@@ -82,6 +91,7 @@
   - ce clone propre ne contient pas `node_modules` localement, donc les validations Node n'ont pas été rejouées ici sans réinstallation
 
 ### Risques restants
+- La topbar publique et la topbar des espaces connectés partagent encore le même composant `Navbar`; le comportement est maintenant différencié par route, mais pas encore scindé en deux composants distincts.
 - La sidebar du layout `/dashboard` reste métier (`client/artisan`). Le correctif actuel porte sur la redirection post-login et le bouton navbar `Dashboard/Espace Admin`.
 - Le filtre messages lus masque les conversations sans message non lu au niveau liste ; il ne change pas la logique des rooms ou du badge messages global.
 - La suppression multiple des notifications tient maintenant le badge local cohérent via le provider, mais doit encore être revalidée visuellement après redéploiement.

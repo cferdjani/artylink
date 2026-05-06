@@ -39,6 +39,13 @@
   - suppression rapide unitaire dans le dropdown de la cloche
 - Fonctionnalité messages désormais codée :
   - filtre `Masquer les messages lus`
+- Ajustement visuel désormais codé :
+  - le bandeau premium du bas est masqué sur `/admin`, `/dashboard`, `/messages`
+  - la topbar est rendue plus pleine largeur et moins “brumeuse” sur ces routes
+  - fichiers :
+    - `src/app/RouteAwareBottomBar.tsx`
+    - `src/app/layout.tsx`
+    - `src/components/shared/navbar.tsx`
 - Le provider notifications expose maintenant aussi :
   - `removeNotifications(ids: string[])`
 - Le commit poussé sur GitHub en fin de session est :
@@ -54,6 +61,8 @@
 - `src/app/dashboard/notifications/components/NotificationsPageClient.tsx`
 - `src/app/messages/page.tsx`
 - `src/app/messages/MessagesPageClient.tsx`
+- `src/app/RouteAwareBottomBar.tsx`
+- `src/app/layout.tsx`
 - `src/components/notifications/NotificationProvider.tsx`
 - `src/components/shared/navbar.tsx`
 - `src/lib/auth/redirect.ts`
@@ -79,6 +88,8 @@
 2. Tester en production privée :
    - reconnexion delegate actif -> landing admin permissionnelle
    - clic navbar `Dashboard/Espace Admin` en delegate actif
+   - disparition du brouillard premium sur admin/dashboard/messages
+   - topbar plus large et mieux alignée sur les pages connectées
    - notifications sélection/suppression
    - filtre `Masquer les lus`
    - filtre `Masquer les messages lus`

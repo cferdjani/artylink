@@ -9,6 +9,7 @@ import { Footer } from "@/components/shared/footer";
 import { Navbar } from "@/components/shared/navbar";
 import { PremiumMarqueeContainer } from "./PremiumMarqueeContainer";
 import { PremiumMarqueeSkeleton } from "./PremiumMarqueeSkeleton";
+import { RouteAwareBottomBar } from "./RouteAwareBottomBar";
 
 import type { Metadata } from "next";
 import "./globals.css";
@@ -97,11 +98,11 @@ export default async function RootLayout({
 
               <Footer />
 
-              <div className="fixed bottom-0 left-0 w-full z-[100] bg-white/70 backdrop-blur-2xl border-t border-white/60 shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
+              <RouteAwareBottomBar>
                 <Suspense fallback={<PremiumMarqueeSkeleton />}>
                   <PremiumMarqueeContainer />
                 </Suspense>
-              </div>
+              </RouteAwareBottomBar>
             </div>
           </NotificationProvider>
         </ToastProvider>
