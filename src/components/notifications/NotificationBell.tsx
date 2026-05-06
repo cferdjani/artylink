@@ -1,6 +1,6 @@
 "use client";
 
-import { markAllNotificationsAsRead, markNotificationAsRead } from "@/lib/actions/notifications";
+import { deleteNotificationsByIds, markAllNotificationsAsRead, markNotificationAsRead } from "@/lib/actions/notifications";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale/fr";
 import {
@@ -9,10 +9,11 @@ import {
     FileText,
     Info,
     MessageCircle,
-    PackageSearch
+    PackageSearch,
+    Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useNotifications } from "./NotificationProvider";
 
 interface NotificationItem {
@@ -26,8 +27,9 @@ interface NotificationItem {
 }
 
 export function NotificationBell() {
-    const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+    const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotifications } = useNotifications();
     const [isOpen, setIsOpen] = useState(false);
+    const [isPending, startTransition] = useTransition();
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Close dropdown on outside click
@@ -57,6 +59,18 @@ export function NotificationBell() {
     const handleMarkAllAsRead = async () => {
         markAllAsRead();
         await markAllNotificationsAsRead();
+    };
+
+    const handleDeleteNotification = (id: string) => {
+        startTransition(async () => {
+            const result = await deleteNotificationsByIds([id]);
+
+            if (!result.success) {
+                return;
+            }
+
+            removeNotifications([id]);
+        });
     };
 
     const toggleDropdown = () => setIsOpen((prev) => !prev);
@@ -164,25 +178,40 @@ export function NotificationBell() {
 
                                 if (href !== "#") {
                                     return (
-                                        <Link
-                                            key={notif.id}
-                                            href={href}
-                                            className={className}
-                                            onClick={() => {
-                                                if (!notif.is_read) {
-                                                    handleMarkAsRead(notif.id);
-                                                }
-                                            }}
-                                        >
-                                            {content}
-                                        </Link>
+                                        <div key={notif.id} className="relative">
+                                            <Link
+                                                href={href}
+                                                className={`${className} pr-12`}
+                                                onClick={() => {
+                                                    if (!notif.is_read) {
+                                                        handleMarkAsRead(notif.id);
+                                                    }
+                                                }}
+                                            >
+                                                {content}
+                                            </Link>
+                                            <button
+                                                type="button"
+                                                onClick={(event) => {
+                                                    event.preventDefault();
+                                                    event.stopPropagation();
+                                                    handleDeleteNotification(notif.id);
+                                                }}
+                                                disabled={isPending}
+                                                className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                                aria-label={`Supprimer ${notif.title}`}
+                                                title="Supprimer"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
                                     );
                                 }
 
                                 return (
                                     <div
                                         key={notif.id}
-                                        className={className}
+                                        className={`${className} pr-12 relative`}
                                         onClick={() => {
                                             if (!notif.is_read) {
                                                 handleMarkAsRead(notif.id);
@@ -191,6 +220,20 @@ export function NotificationBell() {
                                         }}
                                     >
                                         {content}
+                                        <button
+                                            type="button"
+                                            onClick={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+                                                handleDeleteNotification(notif.id);
+                                            }}
+                                            disabled={isPending}
+                                            className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                            aria-label={`Supprimer ${notif.title}`}
+                                            title="Supprimer"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
                                     </div>
                                 );
                             })

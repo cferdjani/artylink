@@ -21,6 +21,7 @@
   - sélection multiple par cases à cocher
   - suppression de la sélection
   - filtre `Masquer les lus`
+  - suppression rapide d'une notification directement depuis le dropdown de la cloche
 - La page conversations supporte désormais :
   - filtre `Masquer les messages lus`
 - Le commit poussé sur GitHub en fin de session est :

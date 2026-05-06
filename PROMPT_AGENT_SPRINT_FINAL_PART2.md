@@ -21,6 +21,7 @@
   - cases à cocher
   - suppression multiple
   - filtre `Masquer les lus`
+  - suppression rapide unitaire dans le dropdown de la cloche
 - Fonctionnalité messages désormais codée :
   - filtre `Masquer les messages lus`
 - Le provider notifications expose maintenant aussi :
