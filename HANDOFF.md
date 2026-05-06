@@ -1010,8 +1010,15 @@
 - Le correctif de ce bug a été poussé vers le repo GitHub propre `https://github.com/cferdjani/artylink.git` avec le commit `4273b7c Fix delegate activation redirect`; il faut maintenant vérifier que Vercel `artylink-web` a bien redéployé ce commit.
 
 ### Correctif appliqué dans cette session
+- Le build Vercel a échoué sur `/_not-found` avec `TypeError: Invalid URL` parce que `NEXT_PUBLIC_SITE_URL` était lu tel quel par `new URL(...)` dans `src/app/layout.tsx`.
+- `src/app/layout.tsx` utilise maintenant `resolveMetadataBase()` :
+  - fallback sur `http://localhost:3000` si la variable est absente
+  - fallback aussi si la valeur fournie n'est pas une URL valide
 - Le client d'activation ne fait plus `router.push(...)` puis `router.refresh()` en même temps.
 - La navigation post-activation et post-refus utilise maintenant `router.replace(...)` uniquement, pour éviter un refresh RSC concurrent pendant le changement d'état.
+- La page serveur `src/app/dashboard/account/admin-activation/page.tsx` ne redirige plus tous les délégués actifs vers `/admin` en dur.
+  - Elle calcule maintenant la vraie route d'atterrissage via `getAdminLandingPath(...)`.
+  - Le CTA `Accès admin déjà activé` utilise aussi cette route calculée.
 - La server action `respondToDelegateInvitation(...)` vérifie maintenant explicitement les erreurs Supabase pour :
   - activation du compte admin
   - consommation du code secret
@@ -1029,26 +1036,32 @@
   - et la `landingPath` calculée
 
 ### Fichiers modifiés
+- `src/app/layout.tsx`
+- `src/app/dashboard/account/admin-activation/page.tsx`
 - `src/app/admin/delegates/AdminActivationClient.tsx`
 - `src/lib/actions/admin-delegates.ts`
 
 ### Validations exécutées
+- `npx eslint src/app/layout.tsx`
 - `npx eslint src/app/admin/delegates/AdminActivationClient.tsx src/lib/actions/admin-delegates.ts`
+- `npx eslint src/app/dashboard/account/admin-activation/page.tsx src/app/admin/delegates/AdminActivationClient.tsx src/lib/actions/admin-delegates.ts`
 
 ### Risques restants
+- La variable Vercel `NEXT_PUBLIC_SITE_URL` doit quand même être corrigée avec une vraie URL, idéalement `https://artylink-web.vercel.app`, même si le code ne casse plus le build.
 - Le correctif n'a pas encore été revalidé manuellement sur la version Vercel après redéploiement automatique.
 - Si l'erreur persiste en prod, il faudra lire le digest exact de l'erreur depuis les logs Vercel et vérifier la route de destination réellement calculée pour le délégué.
 
 ### Prochaines étapes concrètes
-1. Vérifier dans Vercel que le projet `artylink-web` a redéployé le commit `4273b7c`.
-2. Si aucun redeploy automatique n'apparaît, lancer un redeploy manuel depuis `Deployments`.
-3. Retester avec un nouveau délégué en production privée :
+1. Corriger la variable Vercel `NEXT_PUBLIC_SITE_URL` avec `https://artylink-web.vercel.app` si ce n'est pas déjà fait.
+2. Vérifier dans Vercel que le projet `artylink-web` a redéployé le commit contenant le correctif `layout.tsx`.
+3. Si aucun redeploy automatique n'apparaît, lancer un redeploy manuel depuis `Deployments`.
+4. Retester avec un nouveau délégué en production privée :
    - recevoir l'invitation
    - saisir le code
    - cliquer `Activer mon accès`
-4. Vérifier que la page ne montre plus la bannière `Server Components render`.
-5. Vérifier la redirection finale selon les permissions du délégué.
-6. Si besoin, ouvrir les logs Vercel du projet `artylink-web` au moment exact du clic.
+5. Vérifier que la page ne montre plus la bannière `Server Components render`.
+6. Vérifier la redirection finale selon les permissions du délégué.
+7. Si besoin, ouvrir les logs Vercel du projet `artylink-web` au moment exact du clic.
 
 ### Prompt de reprise recommandé pour nouveau chat / nouvel agent
 Lire `AGENTS.md`, `HANDOFF.md`, `PROMPT_AGENT_SPRINT_FINAL_PART2.md` et `DEPLOYMENT.md` avant toute action. Préserver strictement la logique métier existante : `profiles.role` reste `client/artisan`, le système admin reste séparé en `owner/delegate`, et le flux `Mon Compte -> Modifier` ne doit pas être réécrit. Vérifier d'abord que Vercel `artylink-web` a redéployé le commit `4273b7c Fix delegate activation redirect`. Ensuite retester le flux invitation délégué en production privée et documenter le résultat exact dans `HANDOFF.md` et `PROMPT_AGENT_SPRINT_FINAL_PART2.md`.

@@ -13,8 +13,24 @@ import { PremiumMarqueeSkeleton } from "./PremiumMarqueeSkeleton";
 import type { Metadata } from "next";
 import "./globals.css";
 
+function resolveMetadataBase() {
+  const fallbackUrl = "http://localhost:3000";
+  const candidate = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+
+  if (!candidate) {
+    return new URL(fallbackUrl);
+  }
+
+  try {
+    return new URL(candidate);
+  } catch {
+    console.warn("Invalid NEXT_PUBLIC_SITE_URL, falling back to localhost:", candidate);
+    return new URL(fallbackUrl);
+  }
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: resolveMetadataBase(),
   title: {
     default: "ArtyLink - Trouvez votre expert local",
     template: "%s | ArtyLink",
