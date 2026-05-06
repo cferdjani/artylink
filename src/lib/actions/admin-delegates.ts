@@ -626,10 +626,27 @@ export async function respondToDelegateInvitation(action: "accept" | "decline", 
     };
 
     if (action === "decline") {
-        await supabaseAdmin.from("admin_accounts").update({ activation_status: "declined", declined_at: now, updated_at: now }).eq("user_id", user.id);
-        await supabaseAdmin.from("admin_audit_logs").insert({
+        const { error: declineError } = await supabaseAdmin
+            .from("admin_accounts")
+            .update({ activation_status: "declined", declined_at: now, updated_at: now })
+            .eq("user_id", user.id);
+
+        if (declineError) {
+            throw new Error(`Impossible de refuser l'invitation: ${declineError.message}`);
+        }
+
+        const { error: declineAuditError } = await supabaseAdmin.from("admin_audit_logs").insert({
             actor_user_id: user.id, target_user_id: user.id, action: "delegate_activation_declined", payload: { actor_signature: actorSignature }
         });
+
+        if (declineAuditError) {
+            throw new Error(`Impossible de journaliser le refus: ${declineAuditError.message}`);
+        }
+
+        revalidatePath("/dashboard/account");
+        revalidatePath("/dashboard/account/admin-activation");
+        revalidatePath("/dashboard/notifications");
+
         return { success: true, redirectPath: "/dashboard/account" as const };
     }
 
@@ -658,11 +675,41 @@ export async function respondToDelegateInvitation(action: "accept" | "decline", 
             permissions: buildAdminPermissions(permissionsRow ?? EMPTY_ADMIN_PERMISSIONS),
         });
 
-        await supabaseAdmin.from("admin_accounts").update({ activation_status: "active", activated_at: now, updated_at: now }).eq("user_id", user.id);
-        await supabaseAdmin.from("admin_delegate_secrets").update({ consumed_at: now }).eq("user_id", user.id);
-        await supabaseAdmin.from("admin_audit_logs").insert({
+        const { error: activateError } = await supabaseAdmin
+            .from("admin_accounts")
+            .update({ activation_status: "active", activated_at: now, updated_at: now })
+            .eq("user_id", user.id);
+
+        if (activateError) {
+            throw new Error(`Impossible d'activer l'accès admin: ${activateError.message}`);
+        }
+
+        const { error: consumeSecretError } = await supabaseAdmin
+            .from("admin_delegate_secrets")
+            .update({ consumed_at: now })
+            .eq("user_id", user.id);
+
+        if (consumeSecretError) {
+            throw new Error(`Impossible de consommer le code secret: ${consumeSecretError.message}`);
+        }
+
+        const { error: activationAuditError } = await supabaseAdmin.from("admin_audit_logs").insert({
             actor_user_id: user.id, target_user_id: user.id, action: "delegate_activation_accepted", payload: { actor_signature: actorSignature }
         });
+
+        if (activationAuditError) {
+            throw new Error(`Impossible de journaliser l'activation: ${activationAuditError.message}`);
+        }
+
+        revalidatePath("/admin");
+        revalidatePath("/admin/users");
+        revalidatePath("/admin/payments");
+        revalidatePath("/admin/sponsoring");
+        revalidatePath("/admin/delegates");
+        revalidatePath("/dashboard/account");
+        revalidatePath("/dashboard/account/admin-activation");
+        revalidatePath("/dashboard/notifications");
+        revalidatePath(landingPath);
 
         return { success: true, redirectPath: landingPath };
     }

@@ -999,3 +999,56 @@
   - Check infra, monitoring Vercel Analytics branché, et plan de Backup Supabase configuré (Go-Live validé).
   - Tunnel public fonctionnel et indexable.
   - Prochaine étape : Marketing acquisition (SEO / Ads) et suivi des KPIs de conversion.
+
+## Mise à jour continuité — 2026-05-06
+
+### État réel atteint
+- Le déploiement privé Vercel `artylink-web.vercel.app` est en ligne et la home charge correctement.
+- Le propriétaire `oucher007@gmail.com` accède à `/admin`.
+- Le flux `delegate invitation -> page admin-activation -> saisie du code` arrive bien jusqu'à l'écran d'activation en production.
+- Un bug de rendu production restait visible juste après activation du délégué : bannière `An error occurred in the Server Components render`.
+- Le correctif de ce bug est appliqué dans le workspace local `artisans_web`, mais il doit encore être poussé dans le repo GitHub propre `https://github.com/cferdjani/artylink.git` puis redéployé sur Vercel pour prendre effet en ligne.
+
+### Correctif appliqué dans cette session
+- Le client d'activation ne fait plus `router.push(...)` puis `router.refresh()` en même temps.
+- La navigation post-activation et post-refus utilise maintenant `router.replace(...)` uniquement, pour éviter un refresh RSC concurrent pendant le changement d'état.
+- La server action `respondToDelegateInvitation(...)` vérifie maintenant explicitement les erreurs Supabase pour :
+  - activation du compte admin
+  - consommation du code secret
+  - journalisation audit
+  - refus d'invitation
+- La server action revalide désormais les routes critiques après mutation :
+  - `/admin`
+  - `/admin/users`
+  - `/admin/payments`
+  - `/admin/sponsoring`
+  - `/admin/delegates`
+  - `/dashboard/account`
+  - `/dashboard/account/admin-activation`
+  - `/dashboard/notifications`
+  - et la `landingPath` calculée
+
+### Fichiers modifiés
+- `src/app/admin/delegates/AdminActivationClient.tsx`
+- `src/lib/actions/admin-delegates.ts`
+
+### Validations exécutées
+- `npx eslint src/app/admin/delegates/AdminActivationClient.tsx src/lib/actions/admin-delegates.ts`
+
+### Risques restants
+- Le correctif n'a pas encore été revalidé manuellement sur la version Vercel après redéploiement automatique.
+- Si l'erreur persiste en prod, il faudra lire le digest exact de l'erreur depuis les logs Vercel et vérifier la route de destination réellement calculée pour le délégué.
+
+### Prochaines étapes concrètes
+1. Pousser les changements locaux vers le repo GitHub propre `cferdjani/artylink`.
+2. Laisser Vercel redéployer `artylink-web` ou lancer un redeploy manuel.
+3. Retester avec un nouveau délégué en production privée :
+   - recevoir l'invitation
+   - saisir le code
+   - cliquer `Activer mon accès`
+4. Vérifier que la page ne montre plus la bannière `Server Components render`.
+5. Vérifier la redirection finale selon les permissions du délégué.
+6. Si besoin, ouvrir les logs Vercel du projet `artylink-web` au moment exact du clic.
+
+### Prompt de reprise recommandé pour nouveau chat / nouvel agent
+Lire `AGENTS.md`, `HANDOFF.md`, `PROMPT_AGENT_SPRINT_FINAL_PART2.md` et `DEPLOYMENT.md` avant toute action. Préserver strictement la logique métier existante : `profiles.role` reste `client/artisan`, le système admin reste séparé en `owner/delegate`, et le flux `Mon Compte -> Modifier` ne doit pas être réécrit. Vérifier d'abord que les changements locaux concernant l'activation des délégués sont bien poussés vers `https://github.com/cferdjani/artylink.git`, puis que Vercel `artylink-web` redéploie. Ensuite retester le flux invitation délégué en production privée et documenter le résultat exact dans `HANDOFF.md` et `PROMPT_AGENT_SPRINT_FINAL_PART2.md`.

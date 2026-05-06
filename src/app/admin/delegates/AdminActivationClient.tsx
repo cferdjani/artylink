@@ -13,13 +13,16 @@ export function AdminActivationClient() {
     const [isPending, startTransition] = useTransition();
     const [code, setCode] = useState("");
 
+    const navigateAfterMutation = (redirectPath: string) => {
+        router.replace(redirectPath);
+    };
+
     const handleDecline = () => {
         startTransition(async () => {
             try {
                 const result = await respondToDelegateInvitation("decline");
                 toast("Invitation refusée.", "success");
-                router.push(result?.redirectPath ?? "/dashboard/account");
-                router.refresh();
+                navigateAfterMutation(result?.redirectPath ?? "/dashboard/account");
             } catch (e) {
                 toast(e instanceof Error ? e.message : "Erreur", "error");
             }
@@ -35,8 +38,7 @@ export function AdminActivationClient() {
             try {
                 const result = await respondToDelegateInvitation("accept", code);
                 toast("Statut admin activé !", "success");
-                router.push(result?.redirectPath ?? "/admin");
-                router.refresh();
+                navigateAfterMutation(result?.redirectPath ?? "/admin");
             } catch (e) {
                 toast(e instanceof Error ? e.message : "Code invalide", "error");
             }
