@@ -18,6 +18,7 @@ interface NotificationContextProps {
     unreadCount: number;
     markAsRead: (id: string) => void;
     markAllAsRead: () => void;
+    removeNotifications: (ids: string[]) => void;
 }
 
 const NotificationContext = createContext<NotificationContextProps>({
@@ -25,6 +26,7 @@ const NotificationContext = createContext<NotificationContextProps>({
     unreadCount: 0,
     markAsRead: () => {},
     markAllAsRead: () => {},
+    removeNotifications: () => {},
 });
 
 export const useNotifications = () => useContext(NotificationContext);
@@ -99,8 +101,16 @@ export function NotificationProvider({
         }).catch(err => console.error(err));
     };
 
+    const removeNotifications = (ids: string[]) => {
+        const normalizedIds = new Set(ids);
+        const removedUnreadCount = notifications.filter((n) => normalizedIds.has(n.id) && !n.is_read).length;
+
+        setNotifications((prev) => prev.filter((n) => !normalizedIds.has(n.id)));
+        setUnreadCount((current) => Math.max(0, current - removedUnreadCount));
+    };
+
     return (
-        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead }}>
+        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, removeNotifications }}>
             {children}
         </NotificationContext.Provider>
     );

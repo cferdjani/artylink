@@ -1,4 +1,78 @@
-# HANDOFF — ArtyLink Web — 2026-05-05
+# HANDOFF — ArtyLink Web — 2026-05-06
+
+## Clôture technique intermédiaire — 2026-05-06
+
+### État réel atteint
+- Le repo de travail unique est maintenant :
+  - `/Users/mac/Downloads/file 18/artisans_platform_docs/artisans_web`
+- Ce dossier est branché directement sur :
+  - `https://github.com/cferdjani/artylink.git`
+- Le dossier de secours existe toujours :
+  - `/Users/mac/Downloads/file 18/artisans_platform_docs/artisans_web_backup_2026-05-06`
+- Le test réel du flux délégué avec code d'activation est maintenant validé côté user :
+  - création delegate
+  - réception invitation
+  - saisie du code
+  - activation OK
+- Le correctif de redirection delegate active est présent dans :
+  - `src/app/dashboard/account/admin-activation/page.tsx`
+  - cette page ne doit plus forcer `/admin` si le delegate n'a pas `can_view_dashboard`
+- Le centre de notifications supporte désormais :
+  - sélection multiple par cases à cocher
+  - suppression de la sélection
+  - filtre `Masquer les lus`
+- La page conversations supporte désormais :
+  - filtre `Masquer les messages lus`
+
+### Fichiers ajoutés / modifiés le 2026-05-06
+- Ajoutés :
+  - `src/app/dashboard/notifications/components/NotificationsPageClient.tsx`
+  - `src/app/messages/MessagesPageClient.tsx`
+- Modifiés :
+  - `src/app/dashboard/account/admin-activation/page.tsx`
+  - `src/app/dashboard/notifications/page.tsx`
+  - `src/app/messages/page.tsx`
+  - `src/components/notifications/NotificationProvider.tsx`
+  - `src/lib/actions/notifications.ts`
+
+### SQL exécuté
+- Aucun SQL exécuté dans cette session.
+
+### Validations réellement exécutées
+- `git diff --check`
+  - résultat : OK
+- `git status`
+  - résultat : repo propre avant ce patch, puis modifications attendues sur les fichiers ci-dessus
+- Vérification git du repo unifié :
+  - `git rev-parse --show-toplevel`
+  - `git remote -v`
+  - `git log -1 --oneline`
+  - résultat : repo local aligné sur `origin = https://github.com/cferdjani/artylink.git`
+- Validation manuelle user rapportée :
+  - le flux delegate + code est maintenant OK
+
+### Validations non relancées dans ce clone
+- `npm run build`
+- `npx tsc --noEmit`
+- `npx eslint ...`
+- raison :
+  - ce clone propre ne contient pas `node_modules` localement, donc les validations Node n'ont pas été rejouées ici sans réinstallation
+
+### Risques restants
+- Le filtre messages lus masque les conversations sans message non lu au niveau liste ; il ne change pas la logique des rooms ou du badge messages global.
+- La suppression multiple des notifications tient maintenant le badge local cohérent via le provider, mais doit encore être revalidée visuellement après redéploiement.
+- Les SQL `44`, `45`, `46` ne sont toujours pas reconfirmés comme exécutés dans cette session.
+- Le repo GitHub déployé contient toujours des dossiers non essentiels (`.idea`, `.vscode`, `new-plan-artylink`, `next-plan-artylink`) ; ne pas les supprimer sans revue de périmètre.
+
+### Prochaines étapes concrètes
+1. Commit + push ce patch depuis ce repo unifié.
+2. Laisser Vercel redéployer `artylink-web`.
+3. Retester en production privée :
+   - sélection notifications
+   - suppression sélection
+   - filtre `Masquer les lus`
+   - filtre `Masquer les messages lus`
+4. Si tout passe, seulement ensuite envisager le nettoyage du backup `artisans_web_backup_2026-05-06`.
 
 ## Clôture technique intermédiaire — 2026-05-05
 

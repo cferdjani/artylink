@@ -77,6 +77,33 @@ export async function markAllNotificationsAsRead() {
     revalidatePath("/", "layout");
     return true;
 }
+
+export async function deleteNotificationsByIds(ids: string[]) {
+    const user = await requireUser();
+    const supabase = await createSupabaseServerClient();
+
+    const normalizedIds = Array.from(new Set(ids.map((id) => id.trim()).filter(Boolean)));
+
+    if (normalizedIds.length === 0) {
+        return { success: true, deletedCount: 0 };
+    }
+
+    const { error, count } = await supabase
+        .from("notifications")
+        .delete({ count: "exact" })
+        .eq("user_id", user.id)
+        .in("id", normalizedIds);
+
+    if (error) {
+        console.error("Erreur deleteNotificationsByIds:", error);
+        return { success: false, deletedCount: 0, error: error.message };
+    }
+
+    revalidatePath("/", "layout");
+    revalidatePath("/dashboard/notifications");
+
+    return { success: true, deletedCount: count || normalizedIds.length };
+}
 export async function getNotifications() {
     const user = await requireUser();
     const supabase = await createSupabaseServerClient();

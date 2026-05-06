@@ -1,6 +1,7 @@
 import { AdminActivationClient } from "@/app/admin/delegates/AdminActivationClient";
 import { GlassCard } from "@/components/ui/glass-card";
 import { getDelegateInvitationState } from "@/lib/actions/admin-delegates";
+import { getAdminLandingPath } from "@/lib/auth/admin-access";
 import { getAdminContext } from "@/lib/auth/require-admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ShieldAlert, ShieldCheck, ShieldOff, ShieldX } from "lucide-react";
@@ -54,10 +55,21 @@ export default async function AdminActivationPage() {
     }
 
     if (adminContext?.adminType === "delegate" && adminContext.isActiveAdmin) {
-        redirect("/admin");
+        redirect(
+            getAdminLandingPath({
+                isOwner: false,
+                permissions: adminContext.permissions,
+            }),
+        );
     }
 
     const invitation = await getDelegateInvitationState();
+    const activeDelegateLandingPath = adminContext?.adminType === "delegate"
+        ? getAdminLandingPath({
+            isOwner: false,
+            permissions: adminContext.permissions,
+        })
+        : "/admin";
 
     return (
         <div className="mx-auto max-w-3xl px-4 py-8 md:px-8">
@@ -77,7 +89,7 @@ export default async function AdminActivationPage() {
                 <InvitationStateCard
                     title="Accès admin déjà activé"
                     description="Votre statut de délégué admin est déjà actif. Vous pouvez accéder immédiatement à vos modules autorisés."
-                    ctaHref="/admin"
+                    ctaHref={activeDelegateLandingPath}
                     ctaLabel="Ouvrir l'espace admin"
                     icon={<ShieldCheck size={48} className="text-emerald-500" />}
                 />

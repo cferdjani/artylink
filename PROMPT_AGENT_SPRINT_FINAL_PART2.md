@@ -1,5 +1,64 @@
 # PROMPT DE CONTINUITÉ — ARTYLINK MAINTENANCE & SCALE — MISE À JOUR
 
+## ÉTAT DE REPRISE PRIORITAIRE — 2026-05-06
+
+### Source de vérité unique
+- Le seul repo de travail à utiliser est :
+  - `/Users/mac/Downloads/file 18/artisans_platform_docs/artisans_web`
+- Il est branché directement sur :
+  - `https://github.com/cferdjani/artylink.git`
+- Ne plus utiliser le dossier bureau `artylink-deploy`.
+- Une sauvegarde existe encore :
+  - `/Users/mac/Downloads/file 18/artisans_platform_docs/artisans_web_backup_2026-05-06`
+- Ne pas la supprimer tant que les derniers tests UI ne sont pas confirmés.
+
+### État réel atteint
+- Le flux délégué avec code a été retesté manuellement et fonctionne.
+- `src/app/dashboard/account/admin-activation/page.tsx` contient le correctif qui redirige un delegate actif vers sa vraie landing page permissionnelle au lieu de forcer `/admin`.
+- La page notifications a été refactorée pour utiliser :
+  - `src/app/dashboard/notifications/components/NotificationsPageClient.tsx`
+- Fonctionnalités notifications désormais codées :
+  - cases à cocher
+  - suppression multiple
+  - filtre `Masquer les lus`
+- Fonctionnalité messages désormais codée :
+  - filtre `Masquer les messages lus`
+- Le provider notifications expose maintenant aussi :
+  - `removeNotifications(ids: string[])`
+
+### Fichiers critiques modifiés le 2026-05-06
+- `src/app/dashboard/account/admin-activation/page.tsx`
+- `src/app/dashboard/notifications/page.tsx`
+- `src/app/dashboard/notifications/components/NotificationsPageClient.tsx`
+- `src/app/messages/page.tsx`
+- `src/app/messages/MessagesPageClient.tsx`
+- `src/components/notifications/NotificationProvider.tsx`
+- `src/lib/actions/notifications.ts`
+- `HANDOFF.md`
+- `PROMPT_AGENT_SPRINT_FINAL_PART2.md`
+
+### Validations réellement faites
+- `git diff --check` : OK
+- vérification repo :
+  - `git rev-parse --show-toplevel`
+  - `git remote -v`
+  - `git status`
+  - `git log -1 --oneline`
+- le clone propre actuel n'a pas `node_modules`, donc :
+  - `npm run build`
+  - `npx tsc --noEmit`
+  - `npx eslint ...`
+  n'ont pas été relancés ici
+
+### Priorité de reprise
+1. Push du patch courant vers `cferdjani/artylink`.
+2. Laisser/redéclencher le redéploiement Vercel `artylink-web`.
+3. Tester en production privée :
+   - notifications sélection/suppression
+   - filtre `Masquer les lus`
+   - filtre `Masquer les messages lus`
+4. Mettre à jour `HANDOFF.md` et ce prompt avec les résultats réels du test live.
+
 ## ÉTAT DE CLÔTURE INTERMÉDIAIRE — 2026-05-05
 
 ### État réel à la reprise
