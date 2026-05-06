@@ -24,6 +24,11 @@
     - `src/lib/auth/redirect.ts`
     - `src/app/auth/login/page.tsx`
     - `src/app/auth/callback/route.ts`
+- Correctif complémentaire :
+  - le bouton navbar `Dashboard` pointait encore vers le dashboard métier pour les delegates actifs
+  - fichier :
+    - `src/components/shared/navbar.tsx`
+  - il calcule maintenant la landing admin permissionnelle aussi pour les delegates actifs
 - `src/app/dashboard/account/admin-activation/page.tsx` contient le correctif qui redirige un delegate actif vers sa vraie landing page permissionnelle au lieu de forcer `/admin`.
 - La page notifications a été refactorée pour utiliser :
   - `src/app/dashboard/notifications/components/NotificationsPageClient.tsx`
@@ -50,6 +55,7 @@
 - `src/app/messages/page.tsx`
 - `src/app/messages/MessagesPageClient.tsx`
 - `src/components/notifications/NotificationProvider.tsx`
+- `src/components/shared/navbar.tsx`
 - `src/lib/auth/redirect.ts`
 - `src/lib/actions/notifications.ts`
 - `HANDOFF.md`
@@ -72,6 +78,7 @@
 1. Vérifier le déploiement Vercel du correctif de redirection post-login delegate.
 2. Tester en production privée :
    - reconnexion delegate actif -> landing admin permissionnelle
+   - clic navbar `Dashboard/Espace Admin` en delegate actif
    - notifications sélection/suppression
    - filtre `Masquer les lus`
    - filtre `Masquer les messages lus`

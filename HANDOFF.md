@@ -23,6 +23,11 @@
     - `src/app/auth/login/page.tsx`
     - `src/app/auth/callback/route.ts`
   - la redirection post-login résout maintenant aussi la landing admin permissionnelle des delegates actifs
+- Correction supplémentaire :
+  - le bouton `Dashboard` de la navbar pointait encore vers le dashboard métier pour les delegates actifs
+  - correctif appliqué dans :
+    - `src/components/shared/navbar.tsx`
+  - la navbar calcule maintenant aussi la destination `Espace Admin` d'un delegate actif
 - Le correctif de redirection delegate active est présent dans :
   - `src/app/dashboard/account/admin-activation/page.tsx`
   - cette page ne doit plus forcer `/admin` si le delegate n'a pas `can_view_dashboard`
@@ -49,6 +54,7 @@
   - `src/app/dashboard/notifications/page.tsx`
   - `src/app/messages/page.tsx`
   - `src/components/notifications/NotificationProvider.tsx`
+  - `src/components/shared/navbar.tsx`
   - `src/lib/auth/redirect.ts`
   - `src/lib/actions/notifications.ts`
 
@@ -76,6 +82,7 @@
   - ce clone propre ne contient pas `node_modules` localement, donc les validations Node n'ont pas été rejouées ici sans réinstallation
 
 ### Risques restants
+- La sidebar du layout `/dashboard` reste métier (`client/artisan`). Le correctif actuel porte sur la redirection post-login et le bouton navbar `Dashboard/Espace Admin`.
 - Le filtre messages lus masque les conversations sans message non lu au niveau liste ; il ne change pas la logique des rooms ou du badge messages global.
 - La suppression multiple des notifications tient maintenant le badge local cohérent via le provider, mais doit encore être revalidée visuellement après redéploiement.
 - Les SQL `44`, `45`, `46` ne sont toujours pas reconfirmés comme exécutés dans cette session.

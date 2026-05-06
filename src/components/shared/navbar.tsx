@@ -1,6 +1,7 @@
 "use client";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { getUnreadCount } from "@/lib/actions/chat";
+import { buildAdminPermissions, getAdminLandingPath } from "@/lib/auth/admin-access";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import Image from "next/image";
@@ -45,6 +46,8 @@ export function Navbar({ user, availabilityStatus }: NavbarProps) {
     const [authUser, setAuthUser] = useState<NavbarUser | null>(mapAuthUser(user));
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [dashboardHref, setDashboardHref] = useState("/dashboard");
+    const [dashboardLabel, setDashboardLabel] = useState("Dashboard");
 
     const handleLogout = useCallback(async () => {
         const supabase = createSupabaseBrowserClient();
@@ -98,6 +101,79 @@ export function Navbar({ user, availabilityStatus }: NavbarProps) {
     const isAuthenticated = !!authUser;
 
     useEffect(() => {
+        let mounted = true;
+
+        const loadDashboardDestination = async () => {
+            if (!authUser) {
+                if (mounted) {
+                    setDashboardHref("/dashboard");
+                    setDashboardLabel("Dashboard");
+                }
+                return;
+            }
+
+            if (isOwnerAdmin) {
+                if (mounted) {
+                    setDashboardHref("/admin");
+                    setDashboardLabel("Espace Admin");
+                }
+                return;
+            }
+
+            const supabase = createSupabaseBrowserClient();
+            const { data: adminAccount } = await supabase
+                .from("admin_accounts")
+                .select("admin_type, is_active, activation_status")
+                .maybeSingle();
+
+            if (!mounted) {
+                return;
+            }
+
+            if (!adminAccount?.is_active) {
+                setDashboardHref("/dashboard");
+                setDashboardLabel("Dashboard");
+                return;
+            }
+
+            if (adminAccount.admin_type === "owner") {
+                setDashboardHref("/admin");
+                setDashboardLabel("Espace Admin");
+                return;
+            }
+
+            if (adminAccount.admin_type === "delegate" && adminAccount.activation_status === "active") {
+                const { data: adminPermissions } = await supabase
+                    .from("admin_permissions")
+                    .select("can_view_dashboard, can_manage_users, can_manage_payments, can_manage_sponsoring, can_manage_support_logs")
+                    .maybeSingle();
+
+                if (!mounted) {
+                    return;
+                }
+
+                setDashboardHref(
+                    getAdminLandingPath({
+                        isOwner: false,
+                        permissions: buildAdminPermissions(adminPermissions),
+                    }),
+                );
+                setDashboardLabel("Espace Admin");
+                return;
+            }
+
+            setDashboardHref("/dashboard");
+            setDashboardLabel("Dashboard");
+        };
+
+        void loadDashboardDestination();
+
+        return () => {
+            mounted = false;
+        };
+    }, [authUser, isOwnerAdmin]);
+
+    useEffect(() => {
         if (isAuthenticated) {
             getUnreadCount().then((res) => {
                 if (res.data) setUnreadCount(res.data);
@@ -135,10 +211,10 @@ export function Navbar({ user, availabilityStatus }: NavbarProps) {
                     {isAuthenticated ? (
                         <>
                             <Link
-                                href={isOwnerAdmin ? "/admin" : "/dashboard"}
+                                href={dashboardHref}
                                 className="rounded-xl bg-primary/10 px-4 py-2 text-sm font-bold text-primary transition hover:bg-primary/20"
                             >
-                                {isOwnerAdmin ? "Espace Admin" : "Dashboard"}
+                                {dashboardLabel}
                             </Link>
                             <Link
                                 href="/messages"
@@ -242,11 +318,11 @@ export function Navbar({ user, availabilityStatus }: NavbarProps) {
                         {isAuthenticated ? (
                             <>
                                 <Link
-                                    href={isOwnerAdmin ? "/admin" : "/dashboard"}
+                                    href={dashboardHref}
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     className="flex items-center gap-2 rounded-xl bg-primary/10 p-3 text-sm font-bold text-primary hover:bg-primary/20 transition-colors"
                                 >
-                                    {isOwnerAdmin ? "Espace Admin" : "Dashboard"}
+                                    {dashboardLabel}
                                 </Link>
                                 <Link
                                     href="/messages"
