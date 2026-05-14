@@ -9,8 +9,8 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 type NavbarUser = {
     email?: string | null;
@@ -46,7 +46,6 @@ const DEFAULT_AVATAR = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://ww
 
 export function Navbar({ user, availabilityStatus }: NavbarProps) {
     const router = useRouter();
-    const pathname = usePathname();
     const [authUser, setAuthUser] = useState<NavbarUser | null>(mapAuthUser(user));
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -108,7 +107,6 @@ export function Navbar({ user, availabilityStatus }: NavbarProps) {
     const normalizedEmail = (authUser?.email ?? "").trim().toLowerCase();
     const isOwnerAdmin = normalizedEmail === ADMIN_EMAIL;
     const isAuthenticated = !!authUser;
-    const isWorkspaceRoute = pathname.startsWith("/admin") || pathname.startsWith("/dashboard") || pathname.startsWith("/messages");
 
     useEffect(() => {
         let mounted = true;
@@ -257,20 +255,9 @@ export function Navbar({ user, availabilityStatus }: NavbarProps) {
     };
 
     return (
-        <div
-            className={`relative z-50 w-full transition-transform duration-300 ${
-                isWorkspaceRoute
-                    ? "px-0 py-0"
-                    : "mx-auto max-w-[1320px] px-4 py-4 md:px-8"
-            }`}
-        >
-            <div
-                className={`relative flex items-center justify-between gap-4 ${
-                    isWorkspaceRoute
-                        ? "rounded-none border-x-0 border-t-0 border-b border-slate-200/70 bg-white/88 px-5 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl md:px-8"
-                        : "rounded-[2rem] border border-white/60 bg-white/40 px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.06)] shadow-[inset_0_2px_4px_rgba(255,255,255,0.8)] backdrop-blur-2xl md:px-6"
-                }`}
-            >
+        // CORRECTION CSS : On remplace <header> par <div> et on enlève le 'fixed' car layout.tsx gère la fixation.
+        <div className="relative z-50 mx-auto w-full max-w-[1320px] px-4 py-2 md:px-6 transition-transform duration-300">
+            <div className="relative rounded-full bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgba(0,0,0,0.06)] shadow-[inset_0_2px_4px_rgba(255,255,255,0.8)] px-4 py-2 md:px-5 flex items-center justify-between gap-3">
                 <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-100" />
 
                 {/* Logo & Accueil */}

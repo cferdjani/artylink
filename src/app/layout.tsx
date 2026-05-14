@@ -8,9 +8,6 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { Footer } from "@/components/shared/footer";
 import { Navbar } from "@/components/shared/navbar";
-import { PremiumMarqueeContainer } from "./PremiumMarqueeContainer";
-import { PremiumMarqueeSkeleton } from "./PremiumMarqueeSkeleton";
-import { RouteAwareBottomBar } from "./RouteAwareBottomBar";
 
 import type { Metadata } from "next";
 import "./globals.css";
@@ -107,11 +104,7 @@ export default async function RootLayout({
 
               <Footer />
 
-              <RouteAwareBottomBar>
-                <Suspense fallback={<PremiumMarqueeSkeleton />}>
-                  <PremiumMarqueeContainer />
-                </Suspense>
-              </RouteAwareBottomBar>
+
             </div>
           </NotificationProvider>
         </ToastProvider>
