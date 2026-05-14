@@ -4,54 +4,67 @@
 > **RÈGLE ABSOLUE AVANT TOUTE LIGNE DE CODE :**
 > Tu DOIS lire le fichier `artylink.sql` à la racine du projet. C'est la seule et unique **source de vérité** pour le schéma de base de données (noms exacts des tables, colonnes, contraintes CHECK comme `vip`/`premium`/`free`). N'invente jamais de champs sans vérifier ce fichier.
 
-## MISE À JOUR SESSION — 2026-05-14 — Sprint sécurité complet
+## MISE À JOUR SESSION — 2026-05-14 — Sprint sécurité + polish UI
 
 ### État réel atteint
 - **Audit de sécurité complet** réalisé : 25 vulnérabilités identifiées et classées (CRITIQUE → INFO).
 - **Rotation des clés Supabase** effectuée : nouvelles clés `sb_secret_`/`sb_publishable_` actives dans `.env.local` et Vercel.
-- **9 correctifs de sécurité code** appliqués et poussés sur GitHub (3 commits).
-- **Design Alibaba intact** : `PromoBanner`, `CategoryNavBar`, `MegaMenu`, `TrustBar`, `ArtisanAnnonces` fonctionnels.
+- **9 correctifs de sécurité code** + **5 correctifs UI** appliqués et poussés sur GitHub (5 commits).
 
-### Correctifs appliqués (détail)
+### Correctifs sécurité (détail)
 | Fichier | Correctif |
 |---------|-----------|
-| `src/lib/actions/artisan.ts` | Remplacé `SERVICE_ROLE_KEY` par client public `createSupabasePublicClient()` + validation UUID |
-| `src/lib/actions/promo.ts` | Ajout vérification `max_usages`, `valid_until`, unicité par user, fix colonne `discount_amount_dzd` |
-| `src/lib/actions/chat.ts` | Vérification membership room sur `sendMessage`, `getMessages`, `markAsRead`, `getUnreadCount` |
-| `src/lib/actions/favorites.ts` | Fix `client_id` → `user_id` (alignement schéma patch 43) |
-| `src/lib/actions/subscription.ts` | Fix `"basic"` → `"free"` pour `subscription_tier` |
-| `src/lib/actions/booking.ts` | Validation UUID artisan, limite description 2000 chars, prévention auto-réservation |
-| `src/app/layout.tsx` | Suppression imports `PremiumMarquee*` inexistants, restauration design Alibaba |
-| `src/components/shared/navbar.tsx` | Restauration navbar Alibaba arrondie |
+| `src/lib/actions/artisan.ts` | Remplacé `SERVICE_ROLE_KEY` par client public + validation UUID |
+| `src/lib/actions/promo.ts` | Vérification `max_usages`, `valid_until`, unicité par user, fix `discount_amount_dzd` |
+| `src/lib/actions/chat.ts` | Vérification membership room sur toutes les actions |
+| `src/lib/actions/favorites.ts` | Fix `client_id` → `user_id` |
+| `src/lib/actions/subscription.ts` | Fix `"basic"` → `"free"` |
+| `src/lib/actions/booking.ts` | Validation UUID, limite description, prévention auto-réservation |
+| `src/app/layout.tsx` | Suppression imports `PremiumMarquee*` inexistants |
 | `vercel.json` | Ajout headers HSTS + CSP |
+
+### Correctifs UI (détail)
+| Fichier | Correctif |
+|---------|-----------|
+| `src/app/page.tsx` | Suppression Welcome Panel (doublons auth). Bannière `PromoBanner` pleine largeur |
+| `src/components/features/PromoBanner.tsx` | Hauteur fixe `h-[260px]` desktop |
+| `src/components/shared/navbar.tsx` | Ajout `usePathname` + indicateur actif glass (`bg-primary/20 border-primary/40`) |
+| `src/components/shared/CategoryNavBar.tsx` | Suppression "Accueil" dupliqué + ajout `onMouseLeave` timer 200ms + suppression `group-hover` CSS |
+| `src/components/shared/MegaMenu.tsx` | Suppression `group-hover/category` CSS, visibilité contrôlée par React state uniquement |
 
 ### Fichier SQL créé (non exécuté)
 - `47_SQL_SECURITY_HARDENING.sql` — Fix policy chat RLS + activation RLS sur `sponsored_items` et `artisan_subcategories`.
-- **Ce SQL doit être exécuté dans Supabase SQL Editor avant que les corrections soient effectives côté DB.**
+- **Ce SQL doit être exécuté dans Supabase SQL Editor.**
 
 ### ⚠️ PIÈGES CRITIQUES POUR LE PROCHAIN AGENT
 
-1. **`src/middleware.ts` NE DOIT PAS EXISTER** — Next.js 16 utilise `src/proxy.ts`. Si les deux fichiers coexistent, le site entier crash avec un 404 sur toutes les pages. Ce piège a été vécu et corrigé dans cette session.
+1. **`src/middleware.ts` NE DOIT PAS EXISTER** — Next.js 16 utilise `src/proxy.ts`. Les deux fichiers ensemble = crash 404 global.
 
-2. **Le design actuel est style Alibaba** — NE PAS réintroduire :
-   - `PremiumMarqueeContainer` / `PremiumMarqueeSkeleton` (supprimés, fichiers inexistants)
+2. **Le design actuel est style Alibaba simplifié** — NE PAS réintroduire :
+   - `PremiumMarqueeContainer` / `PremiumMarqueeSkeleton` (fichiers supprimés)
    - `isWorkspaceRoute` dans la navbar (ancien design)
    - `RouteAwareBottomBar` dans le layout
+   - **Welcome Panel** dans `page.tsx` (supprimé car doublait la navbar)
+   - **Lien "Accueil"** dans `CategoryNavBar.tsx` (doublon de la navbar)
 
 3. **La homepage (`page.tsx`) utilise** :
-   - `PromoBanner` (bannière slider avec slides promo + artisans VIP)
-   - `TrustBar` (barre de confiance)
-   - `ArtisanAnnonces` (grille d'annonces artisans)
-   - `CategoryNavBar` (barre de catégories fixe sous la navbar)
-   - `HeroSearch` (recherche mobile uniquement)
+   - `PromoBanner` — bannière slider pleine largeur (260px desktop)
+   - `TrustBar` — barre de confiance
+   - `ArtisanAnnonces` — grille d'annonces artisans
+   - `CategoryNavBar` — barre de catégories sous la navbar (sans "Accueil")
+   - `HeroSearch` — recherche mobile uniquement
+   - **Pas de Welcome Panel** — supprimé
 
-4. **Clés Supabase** : les anciennes clés legacy (`eyJ...`) doivent encore être supprimées dans Supabase → Settings → API.
+4. **Le MegaMenu se ferme par timer React** (200ms `onMouseLeave` dans `CategoryNavBar.tsx`). Le CSS `group-hover/category` a été supprimé de `MegaMenu.tsx`. Ne pas le remettre.
+
+5. **Indicateur de page actif** dans la navbar : pilule glass `bg-primary/20 border-primary/40` via `usePathname`. Fonctionne sur `/`, `/dashboard`, `/messages`, `/dashboard/account`.
+
+6. **Clés Supabase** : les anciennes clés legacy (`eyJ...`) doivent encore être supprimées dans Supabase → Settings → API.
 
 ### Priorité de reprise immédiate
 1. Exécuter `47_SQL_SECURITY_HARDENING.sql` dans Supabase SQL Editor.
 2. Supprimer les anciennes clés Supabase legacy.
-3. Vérifier le déploiement Vercel avec le design Alibaba complet.
-4. Continuer l'harmonisation DB/code pour les écarts restants (voir `security_audit_artylink.md` ou `HANDOFF.md`).
+3. Continuer l'harmonisation DB/code pour les écarts restants (voir `HANDOFF.md`).
 
 ## REPRISE OBLIGATOIRE — 2026-05-08
 

@@ -1,16 +1,16 @@
 # HANDOFF — ArtyLink Web — 2026-05-14
 
-## 2026-05-14 — Sprint sécurité complet ArtyLink
+## 2026-05-14 — Sprint sécurité + polish UI ArtyLink
 
 ### État réel atteint
 - **Audit de sécurité complet** effectué sur tout le codebase : schéma SQL, Server Actions, RLS, headers, authentification.
 - **25 vulnérabilités identifiées**, classées de CRITIQUE à INFO, documentées dans l'artifact `security_audit_artylink.md`.
 - **Rotation des clés Supabase** : nouvelles clés API créées (format `sb_secret_` / `sb_publishable_`), mises à jour dans `.env.local` et Vercel.
 - **9 correctifs de sécurité code** appliqués et poussés sur GitHub.
-- **Design Alibaba préservé** : la homepage, la navbar, le `PromoBanner`, `CategoryNavBar`, `MegaMenu`, `TrustBar` et `ArtisanAnnonces` sont intacts et fonctionnels.
 - **Next.js 16 utilise `proxy.ts`**, PAS `middleware.ts`. Le fichier `src/middleware.ts` créé par erreur a été supprimé car il bloquait tout le site (conflit avec `proxy.ts`).
+- **Polish UI appliqué** : bannière pleine largeur, suppression doublons, indicateur de page actif, fix fermeture dropdown.
 
-### Fichiers modifiés
+### Fichiers modifiés — Sécurité
 - `src/lib/actions/artisan.ts` — Remplacé `SERVICE_ROLE_KEY` par client public, ajout validation UUID
 - `src/lib/actions/promo.ts` — Ajout vérification `max_usages`, `valid_until`, unicité par utilisateur, fix colonne `discount_amount_dzd`
 - `src/lib/actions/chat.ts` — Ajout vérification membership room sur `sendMessage`, `getMessages`, `markAsRead`, `getUnreadCount`
@@ -18,8 +18,14 @@
 - `src/lib/actions/subscription.ts` — Fix valeur invalide `"basic"` → `"free"` pour `subscription_tier`
 - `src/lib/actions/booking.ts` — Ajout validation UUID, limite description, prévention auto-réservation
 - `src/app/layout.tsx` — Suppression imports `PremiumMarquee*` inexistants (ancien design), restauration design Alibaba
-- `src/components/shared/navbar.tsx` — Restauration design Alibaba (navbar arrondie sans `isWorkspaceRoute`)
 - `vercel.json` — Ajout headers `Strict-Transport-Security` (HSTS) et `Content-Security-Policy` (CSP)
+
+### Fichiers modifiés — Polish UI
+- `src/app/page.tsx` — Suppression du Welcome Panel (doublons auth). Bannière `PromoBanner` pleine largeur, hauteur augmentée à `260px` desktop
+- `src/components/features/PromoBanner.tsx` — Hauteur fixe `h-[260px]` au lieu de `h-full min-h-[220px]`
+- `src/components/shared/navbar.tsx` — Ajout `usePathname` pour indicateur actif glass (pilule bleu clair `bg-primary/20 border-primary/40`). Restauration design Alibaba arrondi
+- `src/components/shared/CategoryNavBar.tsx` — Suppression du lien "Accueil" dupliqué. Ajout `onMouseLeave` + timer 200ms pour fermer le MegaMenu. Suppression du CSS `group-hover` qui bloquait la fermeture
+- `src/components/shared/MegaMenu.tsx` — Suppression du CSS `group-hover/category` pour que seul le state React contrôle la visibilité
 
 ### Fichiers ajoutés
 - `47_SQL_SECURITY_HARDENING.sql` — Migration RLS : fix policy chat, activation RLS sur `sponsored_items` et `artisan_subcategories`
@@ -32,8 +38,8 @@
 
 ### Validations réellement exécutées
 - `npx tsc --noEmit` : **OK** (0 erreur)
-- `npm run dev` : **OK** (homepage Alibaba s'affiche correctement sur localhost:3000)
-- `git push origin main` : **OK** (3 commits poussés, Vercel auto-deploy déclenché)
+- `npm run dev` : **OK** (homepage Alibaba pleine largeur, dropdown catégories se ferme correctement)
+- `git push origin main` : **OK** (5 commits poussés, Vercel auto-deploy déclenché)
 - Vérification `.env.local` non dans le staging git : **OK**
 - Test site live Vercel après rotation clés : **OK** (homepage charge)
 
@@ -42,21 +48,22 @@
 - Les nouvelles clés (`sb_secret_...` / `sb_publishable_...`) sont actives dans `.env.local` et Vercel.
 
 ### Risques restants
-1. **`47_SQL_SECURITY_HARDENING.sql` non exécuté** : la policy RLS du chat est encore cassée côté DB (référence `client_id`/`artisan_id` au lieu de `participant_1`/`participant_2`). Les tables `sponsored_items` et `artisan_subcategories` n'ont pas encore RLS activé.
-2. Les anciennes clés Supabase legacy n'ont pas encore été supprimées → risque si elles ont été exposées.
-3. La sécurité Edge reste portée par `src/proxy.ts` uniquement. Pas de protection route supplémentaire ajoutée.
-4. Les tables `sponsored_ads`, `leads`, `payments` n'ont pas eu RLS activé car leur existence n'est pas confirmée.
+1. **`47_SQL_SECURITY_HARDENING.sql` non exécuté** : la policy RLS du chat est encore cassée côté DB. Les tables `sponsored_items` et `artisan_subcategories` n'ont pas encore RLS activé.
+2. Les anciennes clés Supabase legacy n'ont pas encore été supprimées.
+3. La sécurité Edge reste portée par `src/proxy.ts` uniquement.
 
 ### Prochaines étapes concrètes
 1. **Exécuter `47_SQL_SECURITY_HARDENING.sql`** dans Supabase SQL Editor.
 2. **Supprimer les anciennes clés legacy** dans Supabase → Settings → API.
-3. Vérifier que le déploiement Vercel affiche le design Alibaba (bannière + catégories + annonces).
-4. Continuer la harmonisation DB/code pour les écarts identifiés dans l'audit (voir `security_audit_artylink.md`).
+3. Continuer la harmonisation DB/code pour les écarts identifiés dans l'audit.
 
 ### ATTENTION pour le prochain agent
-- **Ne PAS créer de fichier `src/middleware.ts`** — Next.js 16 utilise `src/proxy.ts`. Les deux fichiers ensemble crashent le site.
+- **Ne PAS créer de fichier `src/middleware.ts`** — Next.js 16 utilise `src/proxy.ts`. Les deux fichiers ensemble crashent le site avec un 404 global.
+- **Ne PAS remettre le Welcome Panel** dans `page.tsx` — il a été supprimé car il doublait les boutons auth de la navbar.
 - **Ne PAS remettre `isWorkspaceRoute`** dans la navbar — le design actuel est Alibaba style avec une navbar arrondie fixe.
 - **Ne PAS réintroduire `PremiumMarquee*`** dans `layout.tsx` — ces composants ont été supprimés. Le design actuel utilise `PromoBanner` + `CategoryNavBar`.
+- **Ne PAS remettre le lien "Accueil" dans `CategoryNavBar`** — il existe déjà dans la navbar principale.
+- **Le MegaMenu se ferme par timer React** (200ms `onMouseLeave`), pas par CSS `group-hover`. Ne pas remettre `group-hover/category` dans `MegaMenu.tsx`.
 
 ## 2026-05-08 — Clean docs/code périmés + audit métier / DB / homepage
 
