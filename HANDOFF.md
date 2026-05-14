@@ -1,39 +1,62 @@
-# HANDOFF — ArtyLink Web — 2026-05-08
+# HANDOFF — ArtyLink Web — 2026-05-14
 
-## 2026-05-14 — Sprint sécurité ArtyLink — bridge middleware Next
+## 2026-05-14 — Sprint sécurité complet ArtyLink
 
 ### État réel atteint
-- Lecture effectuée avant modification : `AGENTS.md`, `HANDOFF.md`, `PROMPT_AGENT_SPRINT_FINAL_PART2.md`, `artylink.sql` et la doc locale Next `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md`.
-- `src/proxy.ts` existait déjà et porte toujours la logique Supabase de session/protection.
-- Ajout de `src/middleware.ts` comme bridge de compatibilité/export vers `src/proxy.ts` :
-  - `export { proxy as middleware } from "./proxy";`
-  - `export { config } from "./proxy";`
-- Aucun changement de logique auth, admin delegates, inscription ou schéma DB dans cette session.
+- **Audit de sécurité complet** effectué sur tout le codebase : schéma SQL, Server Actions, RLS, headers, authentification.
+- **25 vulnérabilités identifiées**, classées de CRITIQUE à INFO, documentées dans l'artifact `security_audit_artylink.md`.
+- **Rotation des clés Supabase** : nouvelles clés API créées (format `sb_secret_` / `sb_publishable_`), mises à jour dans `.env.local` et Vercel.
+- **9 correctifs de sécurité code** appliqués et poussés sur GitHub.
+- **Design Alibaba préservé** : la homepage, la navbar, le `PromoBanner`, `CategoryNavBar`, `MegaMenu`, `TrustBar` et `ArtisanAnnonces` sont intacts et fonctionnels.
+- **Next.js 16 utilise `proxy.ts`**, PAS `middleware.ts`. Le fichier `src/middleware.ts` créé par erreur a été supprimé car il bloquait tout le site (conflit avec `proxy.ts`).
 
-### Fichiers ajoutés / modifiés
-- Ajouté :
-  - `src/middleware.ts`
-- Modifiés :
-  - `HANDOFF.md`
-  - `PROMPT_AGENT_SPRINT_FINAL_PART2.md`
+### Fichiers modifiés
+- `src/lib/actions/artisan.ts` — Remplacé `SERVICE_ROLE_KEY` par client public, ajout validation UUID
+- `src/lib/actions/promo.ts` — Ajout vérification `max_usages`, `valid_until`, unicité par utilisateur, fix colonne `discount_amount_dzd`
+- `src/lib/actions/chat.ts` — Ajout vérification membership room sur `sendMessage`, `getMessages`, `markAsRead`, `getUnreadCount`
+- `src/lib/actions/favorites.ts` — Fix colonne `client_id` → `user_id` (alignement schéma patch 43)
+- `src/lib/actions/subscription.ts` — Fix valeur invalide `"basic"` → `"free"` pour `subscription_tier`
+- `src/lib/actions/booking.ts` — Ajout validation UUID, limite description, prévention auto-réservation
+- `src/app/layout.tsx` — Suppression imports `PremiumMarquee*` inexistants (ancien design), restauration design Alibaba
+- `src/components/shared/navbar.tsx` — Restauration design Alibaba (navbar arrondie sans `isWorkspaceRoute`)
+- `vercel.json` — Ajout headers `Strict-Transport-Security` (HSTS) et `Content-Security-Policy` (CSP)
+
+### Fichiers ajoutés
+- `47_SQL_SECURITY_HARDENING.sql` — Migration RLS : fix policy chat, activation RLS sur `sponsored_items` et `artisan_subcategories`
+
+### Fichiers supprimés
+- `src/middleware.ts` — Causait un crash fatal (conflit avec `proxy.ts` sur Next.js 16)
 
 ### SQL exécuté
-- Aucun SQL exécuté dans cette session.
+- **`47_SQL_SECURITY_HARDENING.sql` n'a PAS encore été exécuté** — en attente d'exécution dans Supabase SQL Editor.
 
 ### Validations réellement exécutées
-- `npx tsc --noEmit`
-  - résultat : OK
-- `npx eslint src/middleware.ts src/proxy.ts`
-  - résultat : OK
+- `npx tsc --noEmit` : **OK** (0 erreur)
+- `npm run dev` : **OK** (homepage Alibaba s'affiche correctement sur localhost:3000)
+- `git push origin main` : **OK** (3 commits poussés, Vercel auto-deploy déclenché)
+- Vérification `.env.local` non dans le staging git : **OK**
+- Test site live Vercel après rotation clés : **OK** (homepage charge)
+
+### Clés Supabase — état actuel
+- Les anciennes clés JWT legacy (`eyJ...`) doivent être supprimées dans Supabase → Settings → API.
+- Les nouvelles clés (`sb_secret_...` / `sb_publishable_...`) sont actives dans `.env.local` et Vercel.
 
 ### Risques restants
-- `src/middleware.ts` ne fait qu'exposer `src/proxy.ts`; la sûreté réelle du flux dépend toujours intégralement de `src/proxy.ts` et de `src/lib/supabase/middleware.ts`, inchangés ici.
-- Aucune revue de couverture supplémentaire n'a encore été faite sur les matchers `proxy` pour routes sensibles hors `/dashboard` et `/admin`.
+1. **`47_SQL_SECURITY_HARDENING.sql` non exécuté** : la policy RLS du chat est encore cassée côté DB (référence `client_id`/`artisan_id` au lieu de `participant_1`/`participant_2`). Les tables `sponsored_items` et `artisan_subcategories` n'ont pas encore RLS activé.
+2. Les anciennes clés Supabase legacy n'ont pas encore été supprimées → risque si elles ont été exposées.
+3. La sécurité Edge reste portée par `src/proxy.ts` uniquement. Pas de protection route supplémentaire ajoutée.
+4. Les tables `sponsored_ads`, `leads`, `payments` n'ont pas eu RLS activé car leur existence n'est pas confirmée.
 
 ### Prochaines étapes concrètes
-1. Continuer les actions du sprint sécurité sur les couches auth/authorization sans toucher `artylink.sql` hors migration documentée.
-2. Si d'autres fixes touchent l'accès requête, conserver `src/proxy.ts` comme source de logique et `src/middleware.ts` comme simple bridge.
-3. Revalider `npx tsc --noEmit` et un `npx eslint` ciblé à chaque correctif suivant.
+1. **Exécuter `47_SQL_SECURITY_HARDENING.sql`** dans Supabase SQL Editor.
+2. **Supprimer les anciennes clés legacy** dans Supabase → Settings → API.
+3. Vérifier que le déploiement Vercel affiche le design Alibaba (bannière + catégories + annonces).
+4. Continuer la harmonisation DB/code pour les écarts identifiés dans l'audit (voir `security_audit_artylink.md`).
+
+### ATTENTION pour le prochain agent
+- **Ne PAS créer de fichier `src/middleware.ts`** — Next.js 16 utilise `src/proxy.ts`. Les deux fichiers ensemble crashent le site.
+- **Ne PAS remettre `isWorkspaceRoute`** dans la navbar — le design actuel est Alibaba style avec une navbar arrondie fixe.
+- **Ne PAS réintroduire `PremiumMarquee*`** dans `layout.tsx` — ces composants ont été supprimés. Le design actuel utilise `PromoBanner` + `CategoryNavBar`.
 
 ## 2026-05-08 — Clean docs/code périmés + audit métier / DB / homepage
 

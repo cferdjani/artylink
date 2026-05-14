@@ -4,30 +4,54 @@
 > **RÈGLE ABSOLUE AVANT TOUTE LIGNE DE CODE :**
 > Tu DOIS lire le fichier `artylink.sql` à la racine du projet. C'est la seule et unique **source de vérité** pour le schéma de base de données (noms exacts des tables, colonnes, contraintes CHECK comme `vip`/`premium`/`free`). N'invente jamais de champs sans vérifier ce fichier.
 
-## MISE À JOUR SESSION — 2026-05-14
+## MISE À JOUR SESSION — 2026-05-14 — Sprint sécurité complet
 
 ### État réel atteint
-- `src/proxy.ts` reste le point d'entrée réel de la logique de session Supabase.
-- `src/middleware.ts` a été ajouté comme bridge de compatibilité et réexporte strictement `middleware` et `config` depuis `src/proxy.ts`.
-- Aucun SQL ni migration exécutés.
-- Aucun changement de logique métier/auth n'a été introduit dans cette session.
+- **Audit de sécurité complet** réalisé : 25 vulnérabilités identifiées et classées (CRITIQUE → INFO).
+- **Rotation des clés Supabase** effectuée : nouvelles clés `sb_secret_`/`sb_publishable_` actives dans `.env.local` et Vercel.
+- **9 correctifs de sécurité code** appliqués et poussés sur GitHub (3 commits).
+- **Design Alibaba intact** : `PromoBanner`, `CategoryNavBar`, `MegaMenu`, `TrustBar`, `ArtisanAnnonces` fonctionnels.
 
-### Fichiers touchés
-- `src/middleware.ts`
-- `HANDOFF.md`
-- `PROMPT_AGENT_SPRINT_FINAL_PART2.md`
+### Correctifs appliqués (détail)
+| Fichier | Correctif |
+|---------|-----------|
+| `src/lib/actions/artisan.ts` | Remplacé `SERVICE_ROLE_KEY` par client public `createSupabasePublicClient()` + validation UUID |
+| `src/lib/actions/promo.ts` | Ajout vérification `max_usages`, `valid_until`, unicité par user, fix colonne `discount_amount_dzd` |
+| `src/lib/actions/chat.ts` | Vérification membership room sur `sendMessage`, `getMessages`, `markAsRead`, `getUnreadCount` |
+| `src/lib/actions/favorites.ts` | Fix `client_id` → `user_id` (alignement schéma patch 43) |
+| `src/lib/actions/subscription.ts` | Fix `"basic"` → `"free"` pour `subscription_tier` |
+| `src/lib/actions/booking.ts` | Validation UUID artisan, limite description 2000 chars, prévention auto-réservation |
+| `src/app/layout.tsx` | Suppression imports `PremiumMarquee*` inexistants, restauration design Alibaba |
+| `src/components/shared/navbar.tsx` | Restauration navbar Alibaba arrondie |
+| `vercel.json` | Ajout headers HSTS + CSP |
 
-### Validations réellement exécutées
-- `npx tsc --noEmit` : OK
-- `npx eslint src/middleware.ts src/proxy.ts` : OK
+### Fichier SQL créé (non exécuté)
+- `47_SQL_SECURITY_HARDENING.sql` — Fix policy chat RLS + activation RLS sur `sponsored_items` et `artisan_subcategories`.
+- **Ce SQL doit être exécuté dans Supabase SQL Editor avant que les corrections soient effectives côté DB.**
 
-### Risques / vigilance
-- La sécurité effective reste portée par `src/proxy.ts` et `src/lib/supabase/middleware.ts`; le nouveau fichier n'ajoute aucune protection à lui seul.
-- Ne pas dupliquer la logique proxy dans `src/middleware.ts`. Garder ce fichier minimal tant que Next exige ce bridge pour compatibilité.
+### ⚠️ PIÈGES CRITIQUES POUR LE PROCHAIN AGENT
+
+1. **`src/middleware.ts` NE DOIT PAS EXISTER** — Next.js 16 utilise `src/proxy.ts`. Si les deux fichiers coexistent, le site entier crash avec un 404 sur toutes les pages. Ce piège a été vécu et corrigé dans cette session.
+
+2. **Le design actuel est style Alibaba** — NE PAS réintroduire :
+   - `PremiumMarqueeContainer` / `PremiumMarqueeSkeleton` (supprimés, fichiers inexistants)
+   - `isWorkspaceRoute` dans la navbar (ancien design)
+   - `RouteAwareBottomBar` dans le layout
+
+3. **La homepage (`page.tsx`) utilise** :
+   - `PromoBanner` (bannière slider avec slides promo + artisans VIP)
+   - `TrustBar` (barre de confiance)
+   - `ArtisanAnnonces` (grille d'annonces artisans)
+   - `CategoryNavBar` (barre de catégories fixe sous la navbar)
+   - `HeroSearch` (recherche mobile uniquement)
+
+4. **Clés Supabase** : les anciennes clés legacy (`eyJ...`) doivent encore être supprimées dans Supabase → Settings → API.
 
 ### Priorité de reprise immédiate
-1. Poursuivre les correctifs sécurité suivants à partir de `src/proxy.ts`, pas dans `src/middleware.ts`.
-2. Rejouer `npx tsc --noEmit` et un lint ciblé après chaque changement de sécurité.
+1. Exécuter `47_SQL_SECURITY_HARDENING.sql` dans Supabase SQL Editor.
+2. Supprimer les anciennes clés Supabase legacy.
+3. Vérifier le déploiement Vercel avec le design Alibaba complet.
+4. Continuer l'harmonisation DB/code pour les écarts restants (voir `security_audit_artylink.md` ou `HANDOFF.md`).
 
 ## REPRISE OBLIGATOIRE — 2026-05-08
 
