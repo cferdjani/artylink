@@ -6,7 +6,7 @@ import { buildRechercheHref, normalizeText } from "@/lib/search-utils";
 import { cn } from "@/lib/utils";
 import { ChevronDown, MapPin, Menu, Search, Sparkles, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MegaMenu } from "./MegaMenu";
 
 type CategoryNavBarProps = {
@@ -113,6 +113,22 @@ export function CategoryNavBar({ categories }: CategoryNavBarProps) {
     const quickCategories = getQuickCategories(safeCategories);
     const moreCategories = getMoreCategories(safeCategories, quickCategories);
     const mobileCategories = filterMobileCategories(safeCategories, mobileQuery);
+    const megaCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const startMegaCloseTimer = () => {
+        megaCloseTimerRef.current = setTimeout(() => {
+            if (!isMegaMenuPinned) {
+                setIsMegaMenuOpen(false);
+            }
+        }, 200);
+    };
+
+    const cancelMegaCloseTimer = () => {
+        if (megaCloseTimerRef.current) {
+            clearTimeout(megaCloseTimerRef.current);
+            megaCloseTimerRef.current = null;
+        }
+    };
 
     useEffect(() => {
         if (!isMoreMenuOpen && !isMobilePanelOpen) return;
@@ -161,10 +177,14 @@ export function CategoryNavBar({ categories }: CategoryNavBarProps) {
                     <div
                         className="group/category relative z-[70] h-full flex items-center"
                         onMouseEnter={() => {
+                            cancelMegaCloseTimer();
                             if (!isMegaMenuPinned) {
                                 setIsMegaMenuOpen(true);
                             }
                             setIsMoreMenuOpen(false);
+                        }}
+                        onMouseLeave={() => {
+                            startMegaCloseTimer();
                         }}
                     >
                         <button
@@ -191,9 +211,6 @@ export function CategoryNavBar({ categories }: CategoryNavBarProps) {
                     </div>
 
                     <nav aria-label="Catégories rapides" className="flex min-w-0 flex-1 items-center gap-1.5 overflow-visible">
-                        <Link href="/" className="inline-flex h-8 items-center rounded-full px-3 text-[13px] font-bold text-slate-800 transition-colors hover:bg-white/70 hover:text-primary">
-                            Accueil
-                        </Link>
                         {quickCategories.map((cat, index) => (
                             <Link
                                 key={cat.slug}
@@ -242,7 +259,6 @@ export function CategoryNavBar({ categories }: CategoryNavBarProps) {
                                     aria-label="Plus de catégories"
                                     className={cn(
                                         "pointer-events-none invisible absolute left-0 top-[calc(100%+8px)] z-[70] w-[380px] translate-y-2 rounded-2xl border border-white/80 bg-white/95 p-3 opacity-0 shadow-[0_18px_50px_rgba(15,23,42,0.14)] backdrop-blur-xl transition duration-150",
-                                        "group-hover/more:pointer-events-auto group-hover/more:visible group-hover/more:translate-y-0 group-hover/more:opacity-100",
                                         isMoreMenuOpen && "pointer-events-auto visible translate-y-0 opacity-100",
                                     )}
                                 >

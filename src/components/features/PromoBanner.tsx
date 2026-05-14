@@ -107,7 +107,7 @@ export default function PromoBanner({ bannerArtisans = [] }: { bannerArtisans?: 
 
   return (
     <div
-      className="relative w-full h-[180px] md:h-[200px] lg:h-full lg:min-h-[220px] rounded-2xl overflow-hidden shadow-[0_20px_45px_rgba(15,23,42,0.12)] group"
+      className="relative w-full h-[180px] md:h-[220px] lg:h-[260px] rounded-2xl overflow-hidden shadow-[0_20px_45px_rgba(15,23,42,0.12)] group"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={() => setIsPaused(true)}

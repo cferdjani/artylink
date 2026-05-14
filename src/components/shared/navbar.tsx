@@ -9,7 +9,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 type NavbarUser = {
@@ -46,6 +46,7 @@ const DEFAULT_AVATAR = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://ww
 
 export function Navbar({ user, availabilityStatus }: NavbarProps) {
     const router = useRouter();
+    const pathname = usePathname();
     const [authUser, setAuthUser] = useState<NavbarUser | null>(mapAuthUser(user));
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -309,20 +310,20 @@ export function Navbar({ user, availabilityStatus }: NavbarProps) {
 
                 {/* Desktop Navigation */}
                 <nav className="relative z-10 hidden items-center gap-5 text-[13px] font-bold text-slate-700 lg:flex">
-                    <Link href="/" className="transition hover:text-primary">
+                    <Link href="/" className={`transition hover:text-primary/80 rounded-full px-3 py-1 ${pathname === '/' ? 'text-primary font-black bg-primary/20 border border-primary/40' : ''}`}>
                         Accueil
                     </Link>
                     {isAuthenticated ? (
                         <>
                             <Link
                                 href={dashboardHref}
-                                className="rounded-full bg-primary/10 px-3 py-1.5 text-[13px] font-bold text-primary transition hover:bg-primary/20"
+                                className={`rounded-full px-3 py-1.5 text-[13px] font-bold transition ${pathname.startsWith('/dashboard') || pathname.startsWith('/admin') ? 'bg-primary/20 text-primary font-black border border-primary/40' : 'bg-white/50 text-slate-700 hover:bg-white/70 hover:text-primary border border-white/60'}`}
                             >
                                 {dashboardLabel}
                             </Link>
                             <Link
                                 href="/messages"
-                                className="relative transition hover:text-primary"
+                                className={`relative transition hover:text-primary/80 rounded-full px-3 py-1 ${pathname.startsWith('/messages') ? 'text-primary font-black bg-primary/20 border border-primary/40' : ''}`}
                             >
                                 Messages
                                 {unreadCount > 0 && (
@@ -334,7 +335,7 @@ export function Navbar({ user, availabilityStatus }: NavbarProps) {
                             <NotificationBell />
                             <Link
                                 href="/dashboard/account"
-                                className="flex items-center gap-2 transition hover:text-primary"
+                                className={`flex items-center gap-2 transition hover:text-primary/80 rounded-full px-2 py-1 ${pathname.startsWith('/dashboard/account') ? 'text-primary font-black bg-primary/20 border border-primary/40' : ''}`}
                             >
                                 <div className="relative shrink-0">
                                     <div className="relative h-7 w-7 overflow-hidden rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center">

@@ -74,57 +74,13 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* ALIBABA HERO LAYOUT (Banner + Welcome Panel) */}
-      <div className="w-full max-w-[1440px] px-4 md:px-6 mx-auto flex flex-col lg:flex-row gap-4">
-
-        {/* LEFT COLUMN: Promo banner */}
-        <div className="flex-1 min-w-0">
-          <Suspense fallback={
-            <div className="w-full h-[180px] md:h-[200px] lg:h-[220px] rounded-2xl bg-slate-100/50 backdrop-blur-sm animate-pulse border border-white/20" />
-          }>
-            <PromoBanner bannerArtisans={bannerArtisans || []} />
-          </Suspense>
-        </div>
-
-        {/* RIGHT COLUMN: Welcome Panel (Desktop) */}
-        <aside className="hidden xl:flex flex-col w-[260px] shrink-0 bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] h-[220px]">
-          <div className="flex flex-col items-center text-center h-full justify-center">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-primary/20 to-primary/5 border-2 border-white shadow-sm flex items-center justify-center mb-3">
-              <span className="text-2xl font-bold text-primary">
-                {user?.email?.[0]?.toUpperCase() || "A"}
-              </span>
-            </div>
-            <h3 className="text-base font-bold text-slate-900">
-              {user ? "Bon retour !" : "Bienvenue sur ArtyLink"}
-            </h3>
-            <p className="text-xs font-medium text-slate-500 mt-1 mb-6 line-clamp-2">
-              {user ? "Gérez votre activité et vos messages en toute simplicité." : "Trouvez les meilleurs artisans en Algérie."}
-            </p>
-
-            {user ? (
-              <div className="flex flex-col gap-2 w-full mt-auto">
-                <Link href="/dashboard" className="w-full py-2.5 bg-primary hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl transition-colors shadow-sm">
-                  Mon Tableau de bord
-                </Link>
-                <Link href="/messages" className="w-full py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-[13px] font-bold rounded-xl border border-slate-200 transition-colors shadow-sm">
-                  Mes Messages
-                </Link>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2 w-full mt-auto">
-                <Link href="/auth/register-type" className="w-full py-2.5 bg-primary hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl transition-colors shadow-sm">
-                  S'inscrire
-                </Link>
-                <Link href="/auth/login" className="w-full py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-[13px] font-bold rounded-xl border border-slate-200 transition-colors shadow-sm">
-                  Se connecter
-                </Link>
-                <Link href="/onboarding/freelance" className="text-xs font-bold text-primary mt-2 hover:underline">
-                  Devenir Artisan
-                </Link>
-              </div>
-            )}
-          </div>
-        </aside>
+      {/* ALIBABA HERO LAYOUT — Full-width Banner */}
+      <div className="w-full max-w-[1440px] px-4 md:px-6 mx-auto">
+        <Suspense fallback={
+          <div className="w-full h-[180px] md:h-[200px] lg:h-[240px] rounded-2xl bg-slate-100/50 backdrop-blur-sm animate-pulse border border-white/20" />
+        }>
+          <PromoBanner bannerArtisans={bannerArtisans || []} />
+        </Suspense>
       </div>
 
       <div className="w-full max-w-[1320px] mx-auto mt-4">

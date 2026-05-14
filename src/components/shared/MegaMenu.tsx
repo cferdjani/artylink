@@ -38,7 +38,6 @@ export function MegaMenu({ categories, isOpen, onClose }: MegaMenuProps) {
                 aria-label="Toutes les catégories"
                 className={cn(
                     "pointer-events-none invisible absolute left-0 top-[calc(100%+8px)] z-[70] flex min-h-[360px] max-h-[520px] w-[min(920px,calc(100vw-2rem))] origin-top translate-y-2 overflow-hidden rounded-3xl border border-white/80 bg-white/95 p-0 opacity-0 shadow-[0_24px_70px_rgba(15,23,42,0.18)] backdrop-blur-xl transition duration-150",
-                    "group-hover/category:pointer-events-auto group-hover/category:visible group-hover/category:translate-y-0 group-hover/category:opacity-100",
                     isOpen && "pointer-events-auto visible translate-y-0 opacity-100",
                 )}
             >
