@@ -12,7 +12,7 @@ export async function getFavoriteStatus(artisanId: string) {
     const { data } = await supabase
         .from("favorites")
         .select("artisan_id")
-        .eq("client_id", user.id)
+        .eq("user_id", user.id)
         .eq("artisan_id", artisanId)
         .maybeSingle();
 
@@ -26,9 +26,9 @@ export async function toggleFavoriteArtisan(artisanId: string, isCurrentlyFavori
     if (!user) throw new Error("Vous devez être connecté pour gérer vos favoris.");
 
     if (isCurrentlyFavorited) {
-        await supabase.from("favorites").delete().match({ client_id: user.id, artisan_id: artisanId });
+        await supabase.from("favorites").delete().match({ user_id: user.id, artisan_id: artisanId });
     } else {
-        await supabase.from("favorites").insert({ client_id: user.id, artisan_id: artisanId });
+        await supabase.from("favorites").insert({ user_id: user.id, artisan_id: artisanId });
     }
 
     // Rafraîchir les pages concernées

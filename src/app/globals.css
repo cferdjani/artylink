@@ -276,35 +276,6 @@ a {
   z-index: 2;
 }
 
-/* Sparkle overlay for ItemCard */
-.sparkle-overlay {
-  background: linear-gradient(90deg, rgba(255, 214, 102, 0) 0%, rgba(255, 214, 102, 0.9) 50%, rgba(255, 214, 102, 0) 100%);
-  transform: translateY(8px) skewX(-10deg);
-  filter: blur(6px) saturate(1.2);
-  z-index: 5;
-}
-
-.sparkle-active .sparkle-overlay {
-  opacity: 1;
-  animation: sparkle-move 2.4s ease-out forwards;
-}
-
-@keyframes sparkle-move {
-  0% {
-    transform: translateY(8px) translateX(-20%) skewX(-10deg);
-    opacity: 0
-  }
-
-  30% {
-    opacity: 0.6
-  }
-
-  100% {
-    transform: translateY(0px) translateX(120%) skewX(-10deg);
-    opacity: 0
-  }
-}
-
 /* Gold shimmer bottom border (used when element has .gold-shimmer) */
 .gold-shimmer::after {
   content: "";

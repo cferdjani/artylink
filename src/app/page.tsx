@@ -1,15 +1,12 @@
-import { CategoryGrid } from "@/components/features/category-grid";
+import ArtisanAnnonces from "@/components/features/ArtisanAnnonces";
 import { HeroSearch } from "@/components/features/hero-search";
 import HomeOptions from "@/components/features/home-options";
+import PromoBanner from "@/components/features/PromoBanner";
+import TrustBar from "@/components/features/TrustBar";
 import { getHomepageCategories } from "@/lib/marketplace-server-data";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
-
-const trustStats = [
-  { value: "12k+", label: "Clients actifs" },
-  { value: "3.2k+", label: "Cartes de visite" },
-  { value: "< 4 min", label: "Temps moyen de reponse" },
-  { value: "58", label: "Wilayas couvertes" },
-];
+import { Suspense } from "react";
 
 const howItWorks = [
   {
@@ -55,39 +52,113 @@ const artisanPlans = [
 
 export default async function Home() {
   const categories = await getHomepageCategories();
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { data: bannerArtisans } = await supabase
+    .from("artisans")
+    .select(`
+      id, company_name, profession, wilaya, city, rating,
+      profiles!inner(full_name, avatar_url)
+    `)
+    .eq("subscription_tier", "vip")
+    .order("rating", { ascending: false, nullsFirst: false })
+    .limit(3);
 
   return (
-    <div className="home-hero-bg apple-shell relative min-h-screen flex flex-col items-center pt-8 pb-4">
-      <div className="home-hero-overlay w-full">
+    <div className="home-hero-bg apple-shell relative min-h-screen flex flex-col items-center pt-6 pb-4">
+      {/* HeroSearch visible uniquement sur mobile/tablette. Sur Desktop (lg), la Navbar prend le relais. */}
+      <div className="home-hero-overlay w-full lg:hidden mb-4 px-4">
         <div className="w-full">
           <HeroSearch categories={categories} />
         </div>
       </div>
-      <section className="mt-4 w-full max-w-6xl px-4">
-        <div className="apple-panel p-4 md:p-7">
-          <p className="apple-chip inline-flex px-4 py-1.5 text-sm font-semibold uppercase tracking-[0.16em] text-primary">
-            Plateforme active
-          </p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {trustStats.map((stat) => (
-              <article
-                key={stat.label}
-                className="apple-tile px-4 py-5"
-              >
-                <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-                <p className="mt-1 text-sm font-semibold text-slate-600">{stat.label}</p>
-              </article>
+
+      {/* ALIBABA HERO LAYOUT (Banner + Welcome Panel) */}
+      <div className="w-full max-w-[1440px] px-4 md:px-6 mx-auto flex flex-col lg:flex-row gap-4">
+
+        {/* LEFT COLUMN: Promo banner */}
+        <div className="flex-1 min-w-0">
+          <Suspense fallback={
+            <div className="w-full h-[180px] md:h-[200px] lg:h-[220px] rounded-2xl bg-slate-100/50 backdrop-blur-sm animate-pulse border border-white/20" />
+          }>
+            <PromoBanner bannerArtisans={bannerArtisans || []} />
+          </Suspense>
+        </div>
+
+        {/* RIGHT COLUMN: Welcome Panel (Desktop) */}
+        <aside className="hidden xl:flex flex-col w-[260px] shrink-0 bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] h-[220px]">
+          <div className="flex flex-col items-center text-center h-full justify-center">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-primary/20 to-primary/5 border-2 border-white shadow-sm flex items-center justify-center mb-3">
+              <span className="text-2xl font-bold text-primary">
+                {user?.email?.[0]?.toUpperCase() || "A"}
+              </span>
+            </div>
+            <h3 className="text-base font-bold text-slate-900">
+              {user ? "Bon retour !" : "Bienvenue sur ArtyLink"}
+            </h3>
+            <p className="text-xs font-medium text-slate-500 mt-1 mb-6 line-clamp-2">
+              {user ? "Gérez votre activité et vos messages en toute simplicité." : "Trouvez les meilleurs artisans en Algérie."}
+            </p>
+
+            {user ? (
+              <div className="flex flex-col gap-2 w-full mt-auto">
+                <Link href="/dashboard" className="w-full py-2.5 bg-primary hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl transition-colors shadow-sm">
+                  Mon Tableau de bord
+                </Link>
+                <Link href="/messages" className="w-full py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-[13px] font-bold rounded-xl border border-slate-200 transition-colors shadow-sm">
+                  Mes Messages
+                </Link>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2 w-full mt-auto">
+                <Link href="/auth/register-type" className="w-full py-2.5 bg-primary hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl transition-colors shadow-sm">
+                  S'inscrire
+                </Link>
+                <Link href="/auth/login" className="w-full py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-[13px] font-bold rounded-xl border border-slate-200 transition-colors shadow-sm">
+                  Se connecter
+                </Link>
+                <Link href="/onboarding/freelance" className="text-xs font-bold text-primary mt-2 hover:underline">
+                  Devenir Artisan
+                </Link>
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
+
+      <div className="w-full max-w-[1320px] mx-auto mt-4">
+        <TrustBar />
+      </div>
+
+      <Suspense fallback={
+        <div className="w-full max-w-[1320px] px-4 md:px-6 mx-auto mt-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {Array.from({length: 10}).map((_, i) => (
+              <div key={i} className="h-[240px] rounded-2xl bg-slate-100/50 animate-pulse" />
             ))}
           </div>
         </div>
+      }>
+        <ArtisanAnnonces />
+      </Suspense>
+
+      <section className="mt-8 w-full max-w-[1320px] px-4 md:px-6 mx-auto">
+        <h2 className="mb-4 text-xl font-bold text-slate-900">Catégories populaires</h2>
+        <div className="flex overflow-x-auto gap-3 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {categories.map((cat) => (
+            <Link
+              key={cat.slug}
+              href={`/recherche/${cat.slug}`}
+              className="apple-panel flex-shrink-0 px-5 py-2.5 flex items-center gap-2 hover:bg-white/60 transition-colors whitespace-nowrap"
+            >
+              <span className="text-sm font-semibold text-slate-800">{cat.name}</span>
+            </Link>
+          ))}
+        </div>
       </section>
 
-      <div className="mt-6 w-full max-w-6xl px-4">
-        <h2 className="mb-2 text-2xl font-bold text-slate-900">Explorez Par Categorie de Services</h2>
-        <CategoryGrid categories={categories} />
-      </div>
-
-      <section className="mt-10 w-full max-w-6xl px-4">
+      <section className="mt-10 w-full max-w-[1320px] px-4 md:px-6 mx-auto">
         <div className="apple-panel p-6 md:p-8">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
@@ -116,7 +187,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mt-10 w-full max-w-6xl px-4">
+      <section className="mt-10 w-full max-w-[1320px] px-4 md:px-6 mx-auto">
         <div className="apple-panel p-6 md:p-8">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
@@ -145,7 +216,7 @@ export default async function Home() {
 
       <HomeOptions />
 
-      <section className="mt-8 mb-6 w-full max-w-6xl px-4">
+      <section className="mt-8 mb-6 w-full max-w-[1320px] px-4 md:px-6 mx-auto">
         <div className="apple-panel p-6 md:p-8">
           <h3 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
             Besoin d&apos;un artisan maintenant ou pret a booster ton activite ?

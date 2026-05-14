@@ -1,16 +1,107 @@
-# PROMPT DE CONTINUITÉ — ARTYLINK MAINTENANCE & SCALE — MISE À JOUR
+# PROMPT DE CONTINUITÉ — ARTYLINK MAINTENANCE & SCALE
+
+> [!IMPORTANT]
+> **RÈGLE ABSOLUE AVANT TOUTE LIGNE DE CODE :**
+> Tu DOIS lire le fichier `artylink.sql` à la racine du projet. C'est la seule et unique **source de vérité** pour le schéma de base de données (noms exacts des tables, colonnes, contraintes CHECK comme `vip`/`premium`/`free`). N'invente jamais de champs sans vérifier ce fichier.
+
+## MISE À JOUR SESSION — 2026-05-14
+
+### État réel atteint
+- `src/proxy.ts` reste le point d'entrée réel de la logique de session Supabase.
+- `src/middleware.ts` a été ajouté comme bridge de compatibilité et réexporte strictement `middleware` et `config` depuis `src/proxy.ts`.
+- Aucun SQL ni migration exécutés.
+- Aucun changement de logique métier/auth n'a été introduit dans cette session.
+
+### Fichiers touchés
+- `src/middleware.ts`
+- `HANDOFF.md`
+- `PROMPT_AGENT_SPRINT_FINAL_PART2.md`
+
+### Validations réellement exécutées
+- `npx tsc --noEmit` : OK
+- `npx eslint src/middleware.ts src/proxy.ts` : OK
+
+### Risques / vigilance
+- La sécurité effective reste portée par `src/proxy.ts` et `src/lib/supabase/middleware.ts`; le nouveau fichier n'ajoute aucune protection à lui seul.
+- Ne pas dupliquer la logique proxy dans `src/middleware.ts`. Garder ce fichier minimal tant que Next exige ce bridge pour compatibilité.
+
+### Priorité de reprise immédiate
+1. Poursuivre les correctifs sécurité suivants à partir de `src/proxy.ts`, pas dans `src/middleware.ts`.
+2. Rejouer `npx tsc --noEmit` et un lint ciblé après chaque changement de sécurité.
+
+## REPRISE OBLIGATOIRE — 2026-05-08
+
+### Lecture obligatoire avant action
+1. `AGENTS.md`
+2. `HANDOFF.md`
+3. `PROMPT_AGENT_SPRINT_FINAL_PART2.md`
+4. `artylink.sql`
+5. `PROJECT_CURRENT_STATE.md`
+6. `41_ARTYLINK_BUSINESS_RULES.md`
+7. `seed_100_artisans.sql`
+
+### Règles de contexte
+- Ne jamais supposer un chemin local fixe ni un nom de dossier parent fixe. Le projet peut être dupliqué.
+- Ne pas écrire de code avant d'avoir lu `artylink.sql`.
+- Si une ancienne doc contredit `artylink.sql`, ne pas appliquer la doc mécaniquement : documenter le conflit et garder le schéma strict comme source technique.
+- Ne pas promettre que build/lint/typecheck passent sans les relancer réellement.
+- Ne pas réintroduire `profiles.role = admin` comme base des droits admin. L'admin reste séparé via `admin_accounts` / `admin_permissions`.
+
+### Logique métier à préserver
+- ArtyLink est une plateforme de contact, cartes de visite, recherche locale et visibilité payante.
+- ArtyLink vend de la visibilité, pas une certification de qualité, pas une garantie anti-arnaque, pas un arbitrage de prestations.
+- Les visiteurs voient des teasers publics; les contacts complets restent gérés sur la fiche `/artisan/[id]`.
+- La bannière homepage style Alibaba est un espace publicitaire/média : campagnes payantes, sponsors, artisans mis en avant, promos internes, avec durée et visibilité.
+- Les campagnes sponsorisées sont séparées des abonnements artisan.
+- Les 100 faux artisans sont un outil de test/démo uniquement.
+
+### Mapping plans à respecter tant que `artylink.sql` reste strict
+- Public UI : `Basique` / subscription `free` / artisan tier DB `free`
+- Public UI : `Starter` / subscription `starter` / artisan tier DB `premium`
+- Public UI : `Pro` / subscription `pro` / artisan tier DB `vip`
+- Ne jamais écrire `basic`, `starter` ou `pro` dans `artisans.subscription_tier` tant que `artylink.sql` limite la colonne à `free`, `premium`, `vip`.
+
+### État réel à reprendre
+- Le cleanup du 2026-05-08 a supprimé les anciens `.md` contradictoires et les composants non importés.
+- `PROJECT_CURRENT_STATE.md` est la carte courte des pages/composants actifs.
+- `npm run build` : OK.
+- `npx tsc --noEmit` : OK.
+- `npm run lint` : OK, 0 erreur, 43 warnings restants.
+- `git diff --check` : OK.
+- Navigation catégories refondue : plus de scroll horizontal caché, `Toutes les catégories` + `MegaMenu` à gauche, raccourcis prioritaires, bouton `Plus`, panneau mobile `Catégories`.
+- `npx playwright test tests/e2e/category-navigation.spec.ts --reporter=list` : OK, 2 tests passés.
+- `seed_100_artisans.sql` ne doit PAS être exécuté tel quel : il utilise `pro/starter/basic`, `reviews_count` et `status`, désalignés avec `artylink.sql`.
+- Les anciens `PremiumMarquee*`, `HeroBanner*`, `FeaturedArtisans` et vieux prompts Alibaba ont été supprimés car non actifs ou contradictoires.
+
+### Priorité de reprise recommandée
+1. Corriger `seed_100_artisans.sql` pour le schéma strict actuel.
+2. Créer une migration d'harmonisation propre pour les tables/colonnes utilisées par le code mais absentes de `artylink.sql`.
+3. Harmoniser `src/lib/plans.ts`, abonnements et admin payments pour ne jamais écrire `basic/starter/pro` dans `artisans.subscription_tier`.
+4. Brancher la bannière homepage sur le vrai système de campagnes payantes au lieu d'un simple top 3 `vip`, avec fallback interne ArtyLink.
+5. Mettre à jour `HANDOFF.md` et ce prompt avec les validations réelles.
+
+## HOMEPAGE — Architecture de la nouvelle version (AliExpress Style)
+- `PromoBanner.tsx` : Mixe slides marketing et Artisans VIP (TOP 3) injectés dynamiquement depuis `page.tsx`. La hauteur de la bannière a été réduite (`h-[200px]`) pour laisser la place aux cartes.
+- `ArtisanAnnonces.tsx` : Format "Business Card" horizontal, requêtes dynamiques basées sur la VRAIE contrainte DB `vip`, `premium`, `free` avec fallback démo.
+- Le badge `VIP` n'est volontairement affiché qu'aux utilisateurs privilégiés (`isPrivileged = admin|owner|delegate|vip`).
+- Le masquage des contacts publics reste strict sur `/artisan/[id]/page.tsx` — NE PAS DUPLIQUER la logique.
+- Les anciens composants `HeroBannerContainer`, `FeaturedArtisans` et `PremiumMarquee*` ont été supprimés pendant le cleanup.
+- Boutons `Accueil` intégrés au header et barre de catégories. `CategoryNavBar` utilise maintenant une logique desktop `MegaMenu` + raccourcis + `Plus`, et une logique mobile en bottom sheet. `next.config.ts` inclut `api.dicebear.com`.
+- Important : la bannière doit évoluer vers une régie publicitaire interne (`sponsored_items` ou table équivalente), car le besoin métier est une bannière payante automatique avec durée, priorité, visibilité et ciblage.
+
+### MISSION DE REPRISE POUR LE PROCHAIN AGENT
+1. **Alignement Dashboard & Abonnements** : Ton premier objectif est de vérifier que l'interface Dashboard permet la gestion fluide des forfaits. ATTENTION : La base de données utilise les valeurs `vip`, `premium`, `free` (contrainte `artisans_subscription_tier_check`). L'UI doit refléter ou mapper ces valeurs techniques, car le système d'affichage public en dépend.
+2. **Onboarding & Upsell** : Assure-toi que les freelances comprennent la valeur des forfaits de visibilité. La bannière homepage est un espace publicitaire payant séparé; ne pas promettre une présence automatique en bannière sauf si une campagne sponsorisée est achetée ou validée.
+3. **Maintien du standard de design** : Toute nouvelle carte doit respecter le standard "Carte de visite" (pas d'images géantes façon site de rencontre, on reste sur du B2B/B2C sérieux et professionnel).
 
 ## ÉTAT DE REPRISE PRIORITAIRE — 2026-05-06
 
 ### Source de vérité unique
-- Le seul repo de travail à utiliser est :
-  - `/Users/mac/Downloads/file 18/artisans_platform_docs/artisans_web`
+- Utiliser uniquement le repo courant ouvert dans cette session.
 - Il est branché directement sur :
   - `https://github.com/cferdjani/artylink.git`
-- Ne plus utiliser le dossier bureau `artylink-deploy`.
-- Une sauvegarde existe encore :
-  - `/Users/mac/Downloads/file 18/artisans_platform_docs/artisans_web_backup_2026-05-06`
-- Ne pas la supprimer tant que les derniers tests UI ne sont pas confirmés.
+- Ne jamais supposer un chemin local fixe ni un nom de dossier parent fixe.
+- Si une copie de secours locale existe, ne pas s'y baser pour la reprise tant que le repo courant contient l'état le plus récent.
 
 ### État réel atteint
 - Le flux délégué avec code a été retesté manuellement et fonctionne.

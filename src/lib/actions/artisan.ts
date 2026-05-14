@@ -1,11 +1,15 @@
 "use server";
 
-import { createClient } from "@supabase/supabase-js";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
 
 export async function getArtisanById(id: string) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Validation UUID pour éviter les injections
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!id || !uuidRegex.test(id)) {
+        return null;
+    }
+
+    const supabase = createSupabasePublicClient();
 
     const { data, error } = await supabase
         .from("artisans")

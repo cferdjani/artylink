@@ -1,9 +1,10 @@
 import { NotificationProvider } from "@/components/notifications/NotificationProvider";
+import { CategoryNavBar } from "@/components/shared/CategoryNavBar";
 import { ToastProvider } from "@/components/ui/toast";
 import { getRecentNotifications, getUnreadCount } from "@/lib/actions/notifications";
+import { getHomepageCategories } from "@/lib/marketplace-server-data";
 import { isExpectedDynamicServerUsageError } from "@/lib/next-runtime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { Suspense } from "react";
 
 import { Footer } from "@/components/shared/footer";
 import { Navbar } from "@/components/shared/navbar";
@@ -49,6 +50,7 @@ export default async function RootLayout({
   let unreadCount = 0;
   let recentNotifications: any[] = [];
   let availabilityStatus: string | null = null;
+  let categories: any[] = [];
 
   try {
     const supabase = await createSupabaseServerClient();
@@ -73,6 +75,12 @@ export default async function RootLayout({
     user = null;
   }
 
+  try {
+    categories = await getHomepageCategories();
+  } catch (err) {
+    // Fallback silencieux en cas d'erreur ponctuelle de base de données
+  }
+
   return (
     <html
       lang="fr"
@@ -90,9 +98,10 @@ export default async function RootLayout({
               {/* 1. NOUVEAU BLOC FIXE : Englobe la Navbar et le Carousel */}
               <header className="fixed top-0 left-0 w-full z-50 flex flex-col">
                 <Navbar user={user} availabilityStatus={availabilityStatus} />
+                <CategoryNavBar categories={categories} />
               </header>
 
-              <main className="relative z-10 flex-1 pt-[120px] pb-[80px]">
+              <main className="relative z-10 flex-1 pt-[120px] pb-8 md:pt-[130px]">
                 {children}
               </main>
 

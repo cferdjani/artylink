@@ -71,13 +71,11 @@ export function SponsoredCampaignForm({ item, submitLabel, helperText }: Sponsor
 
     useEffect(() => {
         if (campaignType !== "artisan") {
-            setArtisanResults([]);
             return;
         }
 
         const normalizedQuery = deferredArtisanQuery.trim();
         if (normalizedQuery.length < 2) {
-            setArtisanResults([]);
             return;
         }
 
@@ -86,6 +84,11 @@ export function SponsoredCampaignForm({ item, submitLabel, helperText }: Sponsor
             setArtisanResults(results);
         });
     }, [campaignType, deferredArtisanQuery]);
+
+    const visibleArtisanResults =
+        campaignType === "artisan" && deferredArtisanQuery.trim().length >= 2
+            ? artisanResults
+            : [];
 
     function handleSelectArtisan(result: AdminArtisanSearchResult) {
         setLinkValue(`/artisan/${result.id}`);
@@ -202,9 +205,9 @@ export function SponsoredCampaignForm({ item, submitLabel, helperText }: Sponsor
                                 Sélectionnez un artisan pour remplir automatiquement le lien cible au format `/artisan/uuid`.
                             </p>
 
-                            {(isSearching || artisanResults.length > 0 || deferredArtisanQuery.trim().length >= 2) && (
+                            {(isSearching || visibleArtisanResults.length > 0 || deferredArtisanQuery.trim().length >= 2) && (
                                 <div className="mt-3 space-y-2">
-                                    {artisanResults.map((result) => (
+                                    {visibleArtisanResults.map((result) => (
                                         <button
                                             key={result.id}
                                             type="button"
@@ -223,7 +226,7 @@ export function SponsoredCampaignForm({ item, submitLabel, helperText }: Sponsor
                                         </button>
                                     ))}
 
-                                    {!isSearching && artisanResults.length === 0 && (
+                                    {!isSearching && visibleArtisanResults.length === 0 && (
                                         <div className="rounded-xl border border-dashed border-slate-200 bg-white/70 px-4 py-3 text-sm font-medium text-slate-500">
                                             Aucun artisan trouvé pour cette recherche.
                                         </div>

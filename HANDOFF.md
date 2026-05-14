@@ -1,14 +1,166 @@
-# HANDOFF — ArtyLink Web — 2026-05-06
+# HANDOFF — ArtyLink Web — 2026-05-08
+
+## 2026-05-14 — Sprint sécurité ArtyLink — bridge middleware Next
+
+### État réel atteint
+- Lecture effectuée avant modification : `AGENTS.md`, `HANDOFF.md`, `PROMPT_AGENT_SPRINT_FINAL_PART2.md`, `artylink.sql` et la doc locale Next `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md`.
+- `src/proxy.ts` existait déjà et porte toujours la logique Supabase de session/protection.
+- Ajout de `src/middleware.ts` comme bridge de compatibilité/export vers `src/proxy.ts` :
+  - `export { proxy as middleware } from "./proxy";`
+  - `export { config } from "./proxy";`
+- Aucun changement de logique auth, admin delegates, inscription ou schéma DB dans cette session.
+
+### Fichiers ajoutés / modifiés
+- Ajouté :
+  - `src/middleware.ts`
+- Modifiés :
+  - `HANDOFF.md`
+  - `PROMPT_AGENT_SPRINT_FINAL_PART2.md`
+
+### SQL exécuté
+- Aucun SQL exécuté dans cette session.
+
+### Validations réellement exécutées
+- `npx tsc --noEmit`
+  - résultat : OK
+- `npx eslint src/middleware.ts src/proxy.ts`
+  - résultat : OK
+
+### Risques restants
+- `src/middleware.ts` ne fait qu'exposer `src/proxy.ts`; la sûreté réelle du flux dépend toujours intégralement de `src/proxy.ts` et de `src/lib/supabase/middleware.ts`, inchangés ici.
+- Aucune revue de couverture supplémentaire n'a encore été faite sur les matchers `proxy` pour routes sensibles hors `/dashboard` et `/admin`.
+
+### Prochaines étapes concrètes
+1. Continuer les actions du sprint sécurité sur les couches auth/authorization sans toucher `artylink.sql` hors migration documentée.
+2. Si d'autres fixes touchent l'accès requête, conserver `src/proxy.ts` comme source de logique et `src/middleware.ts` comme simple bridge.
+3. Revalider `npx tsc --noEmit` et un `npx eslint` ciblé à chaque correctif suivant.
+
+## 2026-05-08 — Clean docs/code périmés + audit métier / DB / homepage
+
+### Règle absolue de reprise
+- Lire `artylink.sql` à la racine avant toute modification de code, SQL, seed, action serveur ou UI liée aux données.
+- Ne pas supposer de chemin local fixe ni de nom de dossier parent fixe : ce repo est souvent dupliqué.
+- Lire aussi `AGENTS.md`, `PROMPT_AGENT_SPRINT_FINAL_PART2.md`, `PROJECT_CURRENT_STATE.md` et `41_ARTYLINK_BUSINESS_RULES.md` avant de trancher une logique métier.
+- Si une ancienne doc contredit `artylink.sql`, considérer `artylink.sql` comme la source technique stricte, puis documenter la décision de mapping métier.
+
+### Clean effectué
+- Les anciens `.md` contradictoires ou périmés ont été supprimés de la racine.
+- La documentation active est maintenant volontairement courte :
+  - `AGENTS.md`
+  - `HANDOFF.md`
+  - `PROMPT_AGENT_SPRINT_FINAL_PART2.md`
+  - `PROJECT_CURRENT_STATE.md`
+  - `41_ARTYLINK_BUSINESS_RULES.md`
+  - `DEPLOYMENT.md`
+  - `public/images/README.md`
+- Les anciens prompts `PROMPT_BANNER_ANNONCES.md`, `PROMPT_REDESIGN_ALIBABA.md`, les plans SQL `.md`, `REPO_TREE.md`, les checklists anciennes et les plans `new-plan-artylink` / `next-plan-artylink` ont été retirés.
+- Des composants non importés et périmés ont été supprimés :
+  - ancien `HeroBanner*`
+  - ancien `FeaturedArtisans`
+  - ancien `PremiumMarquee*`
+  - anciens modals/overlays non branchés
+  - doublons de formulaires compte
+  - helpers UI non utilisés (`ItemCard`, `portfolio-upload`, etc.)
+- `PROJECT_CURRENT_STATE.md` a été ajouté comme carte courte des pages, composants actifs, mapping DB/plans et prochaines priorités.
+
+### Compréhension métier corrigée
+- ArtyLink n'est pas un e-commerce et n'est pas un certificateur : c'est une plateforme de contact, cartes de visite publiques, recherche locale et visibilité payante.
+- Le revenu principal vient de la visibilité : abonnements artisan, placement prioritaire, annonces sponsorisées, carousel/bannière publicitaire et campagnes à durée limitée.
+- La bannière homepage style Alibaba doit être comprise comme un inventaire média publicitaire : elle peut afficher des campagnes payantes, artisans sponsorisés, sponsors marque, produits/services ou messages internes ArtyLink.
+- Les campagnes sponsorisées sont séparées des abonnements : un artisan peut avoir un forfait de visibilité et acheter en plus une campagne publicitaire.
+- Les 100 faux artisans sont destinés au test et à la démonstration, pas à la production. Le seed actuel doit être vérifié/corrigé avant exécution.
+- ArtyLink vend de la visibilité, pas une garantie de qualité : éviter les promesses publiques du type `certifié`, `vérifié qualité`, `anti-arnaque`.
+
+### Source de vérité DB constatée
+- `artylink.sql` définit `artisans.subscription_tier` avec les seules valeurs techniques actuellement valides : `free`, `premium`, `vip`.
+- `subscriptions.plan_type` accepte `free`, `starter`, `pro`.
+- La logique produit visible peut rester `Basique / Starter / Pro`, mais le code doit mapper proprement vers les valeurs DB existantes.
+- Mapping recommandé tant que le schéma strict reste celui de `artylink.sql` :
+  - public `Basique` / subscription `free` / artisan tier `free`
+  - public `Starter` / subscription `starter` / artisan tier `premium`
+  - public `Pro` / subscription `pro` / artisan tier `vip`
+- Ne pas appliquer `39_SQL_PAYMENT_ORDERS_METADATA_AND_PLAN_ALTER.sql` tel quel : il élargit la contrainte vers `basic/starter/pro` et met `basic` en défaut, ce qui contredit le schéma strict sauvegardé.
+
+### Seed 100 artisans
+- Le fichier `seed_100_artisans.sql` existe et vise 100 faux utilisateurs/artisans avec mot de passe `password123`.
+- Attention : dans son état actuel, il semble désaligné avec `artylink.sql` :
+  - il insère `subscription_tier` en `pro/starter/basic`, invalides si la contrainte stricte `free/premium/vip` est en place
+  - il utilise `reviews_count`, alors que `artylink.sql` expose `review_count`
+  - il utilise `status`, absent de la table `artisans` dans `artylink.sql`
+- Prochaine action recommandée : corriger le seed en `vip/premium/free`, `review_count`, et uniquement les colonnes réellement présentes, puis le documenter comme seed de test uniquement.
+
+### État homepage réel constaté après clean
+- `src/app/page.tsx` charge actuellement :
+  - `PromoBanner`
+  - `TrustBar`
+  - `ArtisanAnnonces`
+  - catégories populaires
+  - sections valeur / forfaits / CTA
+- `PromoBanner.tsx` mélange des slides internes hardcodés et les 3 artisans `vip` les mieux notés.
+- D'un point de vue métier, la prochaine version doit plutôt brancher la grande bannière sur un inventaire de campagnes payantes (`sponsored_items` ou table équivalente) avec fallback interne ArtyLink.
+- Les anciens `PremiumMarquee*` non importés ont été supprimés pour éviter une fausse lecture du produit.
+- `ArtisanAnnonces.tsx` est cohérent avec le style "cartes d'annonces" : teaser public, clic vers `/artisan/[id]`, pas d'affichage téléphone/email dans la grille.
+
+### Navigation catégories — refonte 2026-05-08
+- `src/components/shared/CategoryNavBar.tsx` n'utilise plus de barre horizontale coulissante masquée.
+- Desktop `lg+` : bouton `Toutes les catégories` à gauche, `MegaMenu` complet, raccourcis métier prioritaires, menu compact `Plus` pour le reste.
+- Mobile/tablette : bouton `Catégories` ouvrant un panneau bottom sheet avec recherche locale, catégories et sous-catégories.
+- `src/components/shared/MegaMenu.tsx` reste le point d'entrée complet avec fermeture par overlay et `Escape`.
+- Test ajouté : `tests/e2e/category-navigation.spec.ts`.
+
+### État technique réel vérifié après clean
+- `npm run build` : OK.
+- `npx tsc --noEmit` : OK.
+- `npm run lint` : OK, 0 erreur, 43 warnings restants.
+- `git diff --check` : OK.
+- `npx playwright test tests/e2e/category-navigation.spec.ts --reporter=list` : OK, 2 tests passés.
+- Les erreurs bloquantes précédentes ont été levées :
+  - typage `PromoBanner.tsx`
+  - hooks conditionnels `PremiumMarquee.tsx` via suppression du composant non importé
+  - `setState` synchrone dans `MegaMenu.tsx`
+  - `setState` synchrone dans `SponsoredCampaignForm.tsx`
+  - `prefer-const` dans `src/lib/actions/chat.ts`
+
+### Écarts DB/code à traiter en priorité
+- `src/lib/actions/subscription.ts` écrit encore `artisans.subscription_tier = "basic"` : invalide avec `artylink.sql`.
+- `src/lib/actions/payments-admin.ts` écrit `normalizedPlan` dans `artisans.subscription_tier`, donc potentiellement `basic/starter/pro` : invalide avec `artylink.sql`.
+- `payment_orders.metadata` est utilisé par le code, mais absent de `artylink.sql`; ajouter une migration propre qui n'altère pas mal la contrainte `subscription_tier`.
+- `src/lib/actions/promo.ts` lit `promo.discount_amount`, alors que `artylink.sql` expose `discount_amount_dzd`, et l'insert `wallet_transactions` doit renseigner `reference_type`.
+- `favorites` est utilisé par le code mais absent de `artylink.sql`; le patch 43 propose `favorites(user_id, artisan_id)`, alors que le code utilise encore `client_id`.
+- `reviews.status` est utilisé par `getArtisanReviews`, mais absent de `artylink.sql` tant que le patch 43 n'est pas intégré dans la source de vérité.
+- `search_artisans_advanced`, `availability_slots`, `artisans.badges`, `payment_orders.metadata`, `revoke_admin_delegate_access` et certains champs referral doivent être consolidés dans une migration unique ou retirés du code.
+
+### Plan recommandé pour la prochaine session
+1. Créer une migration d'harmonisation DB unique, basée sur `artylink.sql`, pour les colonnes/tables réellement utilisées par le code.
+2. Harmoniser les plans avec le mapping `Basique/Starter/Pro` -> `free/premium/vip`.
+3. Corriger `seed_100_artisans.sql` avant toute exécution.
+4. Brancher la bannière publicitaire homepage sur le vrai système de campagnes payantes, avec fallback interne ArtyLink.
+5. Améliorer `/admin/sponsoring` pour gérer l'inventaire média : type, placement, priorité, dates, durée, lien, image, statut, clics/impressions si ajoutés.
+6. Mettre à jour ce handoff et le prompt de continuité à la fin de toute session.
+
+## 2026-05-06 — Homepage AliExpress Style & Stabilisation Data terminée
+- **PromoBanner.tsx / page.tsx** : Bannière hero panoramique écrasée en hauteur (`h-[200px]`, `max-w-[1440px]`) pour laisser la place à la grille.
+  - Mix de slides promos plateforme et du TOP 3 artisans `VIP` (query ajustée).
+- **ArtisanAnnonces.tsx** : Grille d'annonces en format "Carte de visite" horizontale.
+  - La grille gère l'affichage dynamique basé sur le vrai schéma de base de données : `vip`, `premium`, `free`.
+  - Badge exclusif (VIP) uniquement visible par `admin/owner/delegate` et le user lui-même. ("À la une" visible par tous).
+- **Navigation & TrustBar** : Ajout du bouton "Accueil" explicite (Header principal + CategoryNavBar) et correction du texte en "Profils authentifiés (Google)".
+- **Configuration Next.js** : Domaine `api.dicebear.com` ajouté à `next.config.ts` pour supporter les avatars des seeds de développement.
+- **SQL Data (Seed)** : Historique à revérifier. L'audit du 2026-05-08 constate que `seed_100_artisans.sql` n'est pas exécutable tel quel contre `artylink.sql` strict et doit être corrigé avant usage.
+- **Schéma DB absolu** : Le fichier `artylink.sql` a été sauvegardé à la racine. Il contient l'export complet et strict du schéma actuel.
+
+### Reste à faire pour le prochain Agent :
+- **[CRITIQUE] Lire le fichier `artylink.sql` avant d'écrire la moindre ligne de code** pour éviter les erreurs de noms de colonnes et de contraintes `CHECK`.
+- S'assurer que le Dashboard Admin permet bien l'affectation facile des vrais forfaits `vip` ou `premium` aux artisans.
+- Valider le comportement des composants si la base de données vient à dépasser les 10 000 artisans.
+- Vérifier que l'Onboarding freelance explique clairement ces options de visibilité.
 
 ## Clôture technique intermédiaire — 2026-05-06
 
 ### État réel atteint
-- Le repo de travail unique est maintenant :
-  - `/Users/mac/Downloads/file 18/artisans_platform_docs/artisans_web`
-- Ce dossier est branché directement sur :
+- Le repo de travail unique est le repo courant ouvert dans cette session.
+- Ce repo est branché directement sur :
   - `https://github.com/cferdjani/artylink.git`
-- Le dossier de secours existe toujours :
-  - `/Users/mac/Downloads/file 18/artisans_platform_docs/artisans_web_backup_2026-05-06`
 - Le test réel du flux délégué avec code d'activation est maintenant validé côté user :
   - création delegate
   - réception invitation
@@ -96,7 +248,7 @@
 - Le filtre messages lus masque les conversations sans message non lu au niveau liste ; il ne change pas la logique des rooms ou du badge messages global.
 - La suppression multiple des notifications tient maintenant le badge local cohérent via le provider, mais doit encore être revalidée visuellement après redéploiement.
 - Les SQL `44`, `45`, `46` ne sont toujours pas reconfirmés comme exécutés dans cette session.
-- Le repo GitHub déployé contient toujours des dossiers non essentiels (`.idea`, `.vscode`, `new-plan-artylink`, `next-plan-artylink`) ; ne pas les supprimer sans revue de périmètre.
+- Le repo GitHub déployé contient toujours des répertoires non essentiels ; ne pas les supprimer sans revue de périmètre.
 
 ### Prochaines étapes concrètes
 1. Push du correctif post-login delegate puis vérifier dans Vercel le déploiement `Ready`.
@@ -107,7 +259,7 @@
    - suppression sélection
    - filtre `Masquer les lus`
    - filtre `Masquer les messages lus`
-3. Si tout passe, seulement ensuite envisager le nettoyage du backup `artisans_web_backup_2026-05-06`.
+3. Si tout passe, seulement ensuite envisager le nettoyage d'une éventuelle copie de secours locale.
 
 ## Clôture technique intermédiaire — 2026-05-05
 

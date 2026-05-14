@@ -89,7 +89,7 @@ export async function changeSubscriptionPlan(plan_type: SubscriptionPlanType): P
     await supabase
         .from("artisans")
         .update({
-            subscription_tier: "basic",
+            subscription_tier: "free",
             updated_at: new Date().toISOString(),
         })
         .eq("id", user.id);

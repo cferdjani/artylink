@@ -5,8 +5,7 @@ import { FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
 export function Footer() {
     return (
         <footer className="relative z-10 w-full mt-16 bg-white/40 border-t border-white/60 backdrop-blur-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.04)]">
-            {/* pb-28 et md:pb-32 ajoutés spécifiquement pour ne pas être caché par le Ticker fixé en bas */}
-            <div className="mx-auto w-full max-w-[1320px] px-6 pt-12 pb-28 md:pt-16 md:pb-32">
+            <div className="mx-auto w-full max-w-[1320px] px-6 pt-12 pb-12 md:pt-16 md:pb-16">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
                     {/* Brand Section */}
                     <div className="lg:col-span-2 space-y-6">
